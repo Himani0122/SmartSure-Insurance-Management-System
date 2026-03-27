@@ -65,7 +65,7 @@ class AuthenticationFilterTest {
     }
 
     @Test
-    void apply_WhenSecuredRoute_ValidToken_ShouldProceedWithHeader() {
+    void apply_WhenSecuredRoute_ValidToken_ShouldProceedWithHeaders() {
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/policy/all")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
                 .build();
@@ -73,11 +73,28 @@ class AuthenticationFilterTest {
         
         when(validator.isSecured(any())).thenReturn(true);
         when(jwtUtil.extractUsername("valid-token")).thenReturn("testuser");
+        when(jwtUtil.extractRole("valid-token")).thenReturn("USER");
 
         filter.apply(new AuthenticationFilter.Config()).filter(exchange, chain).block();
 
         verify(jwtUtil, times(1)).validateToken("valid-token");
+        verify(jwtUtil, times(1)).extractUsername("valid-token");
+        verify(jwtUtil, times(1)).extractRole("valid-token");
         verify(chain, times(1)).filter(any(ServerWebExchange.class));
+    }
+
+    @Test
+    void apply_WhenSecuredRoute_NonBearerToken_ShouldReturnUnAuthorized() {
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/policy/all")
+                .header(HttpHeaders.AUTHORIZATION, "Basic some-token")
+                .build();
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        
+        when(validator.isSecured(any())).thenReturn(true);
+
+        filter.apply(new AuthenticationFilter.Config()).filter(exchange, chain).block();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
     }
 
     @Test

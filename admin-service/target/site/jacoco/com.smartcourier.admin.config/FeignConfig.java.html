@@ -9,11 +9,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
-<span class="nc" id="L12">public class FeignConfig {</span>
+<span class="fc" id="L12">public class FeignConfig {</span>
 
     @Bean
     public RequestInterceptor requestInterceptor() {
-<span class="nc" id="L16">        return requestTemplate -&gt; {</span>
+<span class="fc" id="L16">        return requestTemplate -&gt; {</span>
 <span class="nc" id="L17">            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span>
 <span class="nc bnc" id="L18" title="All 2 branches missed.">            if (attributes != null) {</span>
 <span class="nc" id="L19">                HttpServletRequest request = attributes.getRequest();</span>

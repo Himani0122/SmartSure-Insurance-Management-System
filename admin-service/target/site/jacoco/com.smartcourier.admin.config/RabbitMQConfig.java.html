@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-<span class="nc" id="L10">public class RabbitMQConfig {</span>
+<span class="fc" id="L10">public class RabbitMQConfig {</span>
 
     public static final String CLAIM_STATUS_QUEUE = &quot;claim.status.queue&quot;;
     public static final String CLAIM_EXCHANGE = &quot;claim.exchange&quot;;
@@ -15,22 +15,22 @@ import org.springframework.context.annotation.Configuration;
 
     @Bean
     public Queue claimStatusQueue() {
-<span class="nc" id="L18">        return new Queue(CLAIM_STATUS_QUEUE, true);</span>
+<span class="fc" id="L18">        return new Queue(CLAIM_STATUS_QUEUE, true);</span>
     }
 
     @Bean
     public DirectExchange claimExchange() {
-<span class="nc" id="L23">        return new DirectExchange(CLAIM_EXCHANGE);</span>
+<span class="fc" id="L23">        return new DirectExchange(CLAIM_EXCHANGE);</span>
     }
 
     @Bean
     public Binding claimBinding(Queue claimStatusQueue, DirectExchange claimExchange) {
-<span class="nc" id="L28">        return BindingBuilder.bind(claimStatusQueue).to(claimExchange).with(CLAIM_ROUTING_KEY);</span>
+<span class="fc" id="L28">        return BindingBuilder.bind(claimStatusQueue).to(claimExchange).with(CLAIM_ROUTING_KEY);</span>
     }
 
     @Bean
     public MessageConverter jsonMessageConverter() {
-<span class="nc" id="L33">        return new Jackson2JsonMessageConverter();</span>
+<span class="fc" id="L33">        return new Jackson2JsonMessageConverter();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

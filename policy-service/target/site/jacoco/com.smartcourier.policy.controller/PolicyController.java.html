@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PolicyController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">policy-service</a> &gt; <a href="index.source.html" class="el_package">com.smartcourier.policy.controller</a> &gt; <span class="el_source">PolicyController.java</span></div><h1>PolicyController.java</h1><pre class="source lang-java linenums">package com.smartcourier.policy.controller;
+
+import com.smartcourier.policy.dto.PolicyRequest;
+import com.smartcourier.policy.dto.PolicyResponse;
+import com.smartcourier.policy.service.PolicyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/v1/policies&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Policy Management&quot;, description = &quot;APIs for creating, viewing, purchasing, and managing insurance policies&quot;)
+public class PolicyController {
+
+    private final PolicyService policyService;
+
+    @Operation(summary = &quot;Search policies&quot;, description = &quot;Search policies by name or description keyword. Accessible by USER and ADMIN.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Matching policies returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @GetMapping(&quot;/search&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;PolicyResponse&gt;&gt; searchPolicies(@RequestParam String query) {
+<span class="fc" id="L35">        return ResponseEntity.ok(policyService.searchPolicies(query));</span>
+    }
+
+    @Operation(summary = &quot;Get all active policies&quot;, description = &quot;Returns policies with ACTIVE status.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Active policies returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @GetMapping(&quot;/active&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;PolicyResponse&gt;&gt; getActivePolicies() {
+<span class="fc" id="L46">        return ResponseEntity.ok(policyService.getActivePolicies());</span>
+    }
+
+    @Operation(summary = &quot;Get all expired policies&quot;, description = &quot;Returns policies with EXPIRED status.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Expired policies returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @GetMapping(&quot;/expired&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;PolicyResponse&gt;&gt; getExpiredPolicies() {
+<span class="fc" id="L57">        return ResponseEntity.ok(policyService.getExpiredPolicies());</span>
+    }
+
+    @Operation(summary = &quot;Get policies purchased by the logged-in user&quot;, description = &quot;Returns all policies the current user has purchased. USER role only.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User's policies returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — USER role required&quot;)
+    })
+    @GetMapping(&quot;/user&quot;)
+    @PreAuthorize(&quot;hasRole('USER')&quot;)
+    public ResponseEntity&lt;List&lt;PolicyResponse&gt;&gt; getUserPurchasedPolicies(@RequestHeader(&quot;X-Username&quot;) String username) {
+<span class="fc" id="L68">        return ResponseEntity.ok(policyService.getUserPurchasedPolicies(username));</span>
+    }
+
+    @Operation(summary = &quot;Calculate premium for a policy&quot;, description = &quot;Returns the calculated premium amount for the specified policy ID.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Premium amount returned&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Policy not found&quot;)
+    })
+    @GetMapping(&quot;/premium/calculate/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;BigDecimal&gt; calculatePremium(@PathVariable Long id) {
+<span class="fc" id="L79">        return ResponseEntity.ok(policyService.calculatePremium(id));</span>
+    }
+
+    @Operation(summary = &quot;Get policies by type&quot;, description = &quot;Filters policies by type (HEALTH, LIFE, VEHICLE, PROPERTY, OTHER).&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Filtered policies returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @GetMapping(&quot;/type/{type}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;PolicyResponse&gt;&gt; getPoliciesByType(@PathVariable String type) {
+<span class="fc" id="L90">        return ResponseEntity.ok(policyService.getPoliciesByType(type));</span>
+    }
+
+    @Operation(summary = &quot;Get policy by ID&quot;, description = &quot;Returns full details of a specific policy.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Policy found and returned&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Policy not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;PolicyResponse&gt; getPolicyById(@PathVariable Long id) {
+<span class="fc" id="L102">        return ResponseEntity.ok(policyService.getPolicyById(id));</span>
+    }
+
+    @Operation(summary = &quot;Create a new policy (Admin only)&quot;, description = &quot;Creates a new insurance policy. Type must be one of: HEALTH, LIFE, VEHICLE, PROPERTY, OTHER.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Policy created successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Validation error in request body&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @PostMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;PolicyResponse&gt; createPolicy(@Valid @RequestBody PolicyRequest request) {
+<span class="fc" id="L114">        return new ResponseEntity&lt;&gt;(policyService.createPolicy(request), HttpStatus.CREATED);</span>
+    }
+
+    @Operation(summary = &quot;Get all policies&quot;, description = &quot;Returns the complete list of all insurance policies.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;All policies returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;PolicyResponse&gt;&gt; getPolicies() {
+<span class="fc" id="L125">        return new ResponseEntity&lt;&gt;(policyService.getPolicies(), HttpStatus.OK);</span>
+    }
+
+    @Operation(summary = &quot;Purchase a policy (User only)&quot;, description = &quot;Allows a user to purchase a policy by ID. Triggers a RabbitMQ event on success.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Policy purchased successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Policy not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — USER role required&quot;)
+    })
+    @PostMapping(&quot;/{id}/purchase&quot;)
+    @PreAuthorize(&quot;hasRole('USER')&quot;)
+    public ResponseEntity&lt;String&gt; purchasePolicy(@PathVariable Long id, @RequestHeader(&quot;X-Username&quot;) String username) {
+<span class="fc" id="L137">        return new ResponseEntity&lt;&gt;(policyService.purchasePolicy(id, username), HttpStatus.OK);</span>
+    }
+
+    @Operation(summary = &quot;Update a policy (Admin only)&quot;, description = &quot;Updates an existing policy by ID. All validated fields apply.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Policy updated successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Validation error&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Policy not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;PolicyResponse&gt; updatePolicy(@PathVariable Long id, @Valid @RequestBody PolicyRequest request) {
+<span class="fc" id="L150">        return ResponseEntity.ok(policyService.updatePolicy(id, request));</span>
+    }
+
+    @Operation(summary = &quot;Delete a policy (Admin only)&quot;, description = &quot;Permanently deletes a policy by ID.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Policy deleted successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Policy not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Void&gt; deletePolicy(@PathVariable Long id) {
+<span class="fc" id="L162">        policyService.deletePolicy(id);</span>
+<span class="fc" id="L163">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @Operation(summary = &quot;Cancel a purchased policy (User only)&quot;, description = &quot;Allows a user to cancel their own purchased policy.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Policy cancelled successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Policy not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — USER role required&quot;)
+    })
+    @PostMapping(&quot;/{id}/cancel&quot;)
+    @PreAuthorize(&quot;hasRole('USER')&quot;)
+    public ResponseEntity&lt;String&gt; cancelPolicy(@PathVariable Long id, @RequestHeader(&quot;X-Username&quot;) String username) {
+<span class="fc" id="L175">        return ResponseEntity.ok(policyService.cancelPolicy(id, username));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

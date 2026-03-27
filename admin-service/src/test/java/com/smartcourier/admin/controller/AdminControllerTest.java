@@ -85,13 +85,90 @@ public class AdminControllerTest {
     }
 
     @Test
-    void blockUser_ShouldReturnSuccess() throws Exception {
-        when(adminService.blockUser(1L)).thenReturn("User blocked");
+    void getPendingClaims_ShouldReturnList() throws Exception {
+        when(adminService.getPendingClaims()).thenReturn(List.of(testClaim));
 
-        mockMvc.perform(put("/api/v1/admin/users/1/block")
+        mockMvc.perform(get("/api/v1/admin/claims/pending")
                         .header("X-Username", "admin")
                         .header("X-Role", "ADMIN"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("User blocked"));
+                .andExpect(jsonPath("$[0].status").value("PENDING"));
+    }
+
+    @Test
+    void getClaimById_ShouldReturnClaim() throws Exception {
+        when(adminService.getClaimById(1L)).thenReturn(testClaim);
+
+        mockMvc.perform(get("/api/v1/admin/claims/1")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void approveClaim_ShouldReturnSuccess() throws Exception {
+        when(adminService.approveClaim(1L)).thenReturn("Approved");
+
+        mockMvc.perform(post("/api/v1/admin/claims/1/approve")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Approved"));
+    }
+
+    @Test
+    void rejectClaim_ShouldReturnSuccess() throws Exception {
+        when(adminService.rejectClaim(1L)).thenReturn("Rejected");
+
+        mockMvc.perform(post("/api/v1/admin/claims/1/reject")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Rejected"));
+    }
+
+    @Test
+    void getAllUsers_ShouldReturnList() throws Exception {
+        when(adminService.getAllUsers()).thenReturn(List.of(Map.of("id", 1)));
+
+        mockMvc.perform(get("/api/v1/admin/users")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1));
+    }
+
+    @Test
+    void activateUser_ShouldReturnSuccess() throws Exception {
+        when(adminService.activateUser(1L)).thenReturn("Activated");
+
+        mockMvc.perform(put("/api/v1/admin/users/1/activate")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Activated"));
+    }
+
+    @Test
+    void getClaimsReport_ShouldReturnList() throws Exception {
+        when(adminService.getClaimsReport()).thenReturn(List.of(testClaim));
+
+        mockMvc.perform(get("/api/v1/admin/reports/claims")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void getPoliciesReport_ShouldReturnList() throws Exception {
+        when(adminService.getPoliciesReport()).thenReturn(List.of(Map.of("id", 1)));
+
+        mockMvc.perform(get("/api/v1/admin/reports/policies")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }

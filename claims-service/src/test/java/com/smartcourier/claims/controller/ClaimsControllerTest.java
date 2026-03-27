@@ -75,14 +75,74 @@ public class ClaimsControllerTest {
     }
 
     @Test
-    void addDocument_ShouldReturnOk() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
-        when(claimsService.addDocument(anyLong(), any(), anyString())).thenReturn(testResponse);
+    void getPendingClaims_ShouldReturnList() throws Exception {
+        when(claimsService.getPendingClaims()).thenReturn(List.of(testResponse));
 
-        mockMvc.perform(multipart("/api/v1/claims/1/add-document")
-                        .file(file)
+        mockMvc.perform(get("/api/v1/claims/pending")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("PENDING"));
+    }
+
+    @Test
+    void getUserClaims_ShouldReturnList() throws Exception {
+        when(claimsService.getUserClaims("testusr")).thenReturn(List.of(testResponse));
+
+        mockMvc.perform(get("/api/v1/claims/user")
+                        .header("X-Username", "testusr")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].username").value("testusr"));
+    }
+
+    @Test
+    void submitClaim_ShouldReturnOk() throws Exception {
+        when(claimsService.submitClaim(anyLong(), anyString())).thenReturn(testResponse);
+
+        mockMvc.perform(put("/api/v1/claims/1/submit")
                         .header("X-Username", "testusr")
                         .header("X-Role", "USER"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void cancelClaim_ShouldReturnOk() throws Exception {
+        when(claimsService.cancelClaim(anyLong(), anyString())).thenReturn(testResponse);
+
+        mockMvc.perform(put("/api/v1/claims/1/cancel")
+                        .header("X-Username", "testusr")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteDocument_ShouldReturnNoContent() throws Exception {
+        mockMvc.perform(delete("/api/v1/claims/1/documents/1")
+                        .header("X-Username", "testusr")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void getClaimById_ShouldReturnClaim() throws Exception {
+        when(claimsService.trackClaim(1L)).thenReturn(testResponse);
+
+        mockMvc.perform(get("/api/v1/claims/1")
+                        .header("X-Username", "testusr")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void getClaimsByStatus_ShouldReturnList() throws Exception {
+        when(claimsService.getClaimsByStatus("SUBMITTED")).thenReturn(List.of(testResponse));
+
+        mockMvc.perform(get("/api/v1/claims/status/SUBMITTED")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }

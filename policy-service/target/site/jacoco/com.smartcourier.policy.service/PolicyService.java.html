@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PolicyService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">policy-service</a> &gt; <a href="index.source.html" class="el_package">com.smartcourier.policy.service</a> &gt; <span class="el_source">PolicyService.java</span></div><h1>PolicyService.java</h1><pre class="source lang-java linenums">package com.smartcourier.policy.service;
+
+import com.smartcourier.policy.dto.PolicyRequest;
+import com.smartcourier.policy.dto.PolicyResponse;
+import com.smartcourier.policy.entity.Policy;
+import com.smartcourier.policy.entity.PolicyPurchaseSaga;
+import com.smartcourier.policy.repository.PolicyRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
+import com.smartcourier.policy.repository.PolicyPurchaseSagaRepository;
+
+<span class="fc" id="L21">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class PolicyService {
+
+    private final PolicyRepository policyRepository;
+    private final SagaOrchestrator sagaOrchestrator;
+    private final PolicyPurchaseSagaRepository sagaRepository;
+
+    @Transactional
+    @CacheEvict(value = &quot;policies&quot;, allEntries = true)
+    public PolicyResponse createPolicy(PolicyRequest request) {
+<span class="fc" id="L33">        Policy policy = Policy.builder()</span>
+<span class="fc" id="L34">                .name(request.getName())</span>
+<span class="fc" id="L35">                .description(request.getDescription())</span>
+<span class="fc" id="L36">                .basePremium(request.getBasePremium())</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">                .type(request.getType() != null ? request.getType() : &quot;GENERAL&quot;)</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">                .status(request.getStatus() != null ? request.getStatus() : &quot;ACTIVE&quot;)</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">                .expiryDate(request.getExpiryDate() != null ? request.getExpiryDate() : LocalDateTime.now().plusYears(1))</span>
+<span class="fc" id="L40">                .build();</span>
+<span class="fc" id="L41">        Policy saved = policyRepository.save(policy);</span>
+<span class="fc" id="L42">        return mapToResponse(saved);</span>
+    }
+
+    @Cacheable(value = &quot;policies&quot;, key = &quot;'all_policies'&quot;)
+    public List&lt;PolicyResponse&gt; getPolicies() {
+<span class="fc" id="L47">        return policyRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());</span>
+    }
+
+    public PolicyResponse getPolicyById(Long id) {
+<span class="fc" id="L51">        Policy policy = policyRepository.findById(id)</span>
+<span class="fc" id="L52">                .orElseThrow(() -&gt; new RuntimeException(&quot;Policy not found with id: &quot; + id));</span>
+<span class="fc" id="L53">        return mapToResponse(policy);</span>
+    }
+
+    @Transactional
+    @CacheEvict(value = {&quot;policies&quot;, &quot;premium&quot;}, allEntries = true)
+    public PolicyResponse updatePolicy(Long id, PolicyRequest request) {
+<span class="fc" id="L59">        Policy policy = policyRepository.findById(id)</span>
+<span class="fc" id="L60">                .orElseThrow(() -&gt; new RuntimeException(&quot;Policy not found with id: &quot; + id));</span>
+<span class="fc" id="L61">        policy.setName(request.getName());</span>
+<span class="fc" id="L62">        policy.setDescription(request.getDescription());</span>
+<span class="fc" id="L63">        policy.setBasePremium(request.getBasePremium());</span>
+<span class="fc" id="L64">        policy.setType(request.getType());</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if (request.getStatus() != null) policy.setStatus(request.getStatus());</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (request.getExpiryDate() != null) policy.setExpiryDate(request.getExpiryDate());</span>
+        
+<span class="fc" id="L68">        Policy updated = policyRepository.save(policy);</span>
+<span class="fc" id="L69">        return mapToResponse(updated);</span>
+    }
+
+    @Transactional
+    @CacheEvict(value = &quot;policies&quot;, allEntries = true)
+    public void deletePolicy(Long id) {
+<span class="fc" id="L75">        policyRepository.deleteById(id);</span>
+<span class="fc" id="L76">    }</span>
+
+    public List&lt;PolicyResponse&gt; getPoliciesByType(String type) {
+<span class="fc" id="L79">        return policyRepository.findByType(type).stream().map(this::mapToResponse).collect(Collectors.toList());</span>
+    }
+
+    public List&lt;PolicyResponse&gt; getActivePolicies() {
+<span class="fc" id="L83">        return policyRepository.findByStatus(&quot;ACTIVE&quot;).stream().map(this::mapToResponse).collect(Collectors.toList());</span>
+    }
+
+    public List&lt;PolicyResponse&gt; getExpiredPolicies() {
+<span class="nc" id="L87">        return policyRepository.findByStatus(&quot;EXPIRED&quot;).stream().map(this::mapToResponse).collect(Collectors.toList());</span>
+    }
+
+    public List&lt;PolicyResponse&gt; searchPolicies(String query) {
+<span class="fc" id="L91">        return policyRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query)</span>
+<span class="fc" id="L92">                .stream().map(this::mapToResponse).collect(Collectors.toList());</span>
+    }
+
+    public List&lt;PolicyResponse&gt; getUserPurchasedPolicies(String username) {
+<span class="fc" id="L96">        List&lt;PolicyPurchaseSaga&gt; sagas = sagaRepository.findByUserIdAndStatus(username, &quot;COMPLETED&quot;);</span>
+<span class="fc" id="L97">        return sagas.stream()</span>
+<span class="fc" id="L98">                .map(saga -&gt; policyRepository.findById(saga.getPolicyId()).orElse(null))</span>
+<span class="fc" id="L99">                .filter(java.util.Objects::nonNull)</span>
+<span class="fc" id="L100">                .map(this::mapToResponse)</span>
+<span class="fc" id="L101">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional
+    @CacheEvict(value = &quot;policies&quot;, allEntries = true)
+    public String cancelPolicy(Long id, String username) {
+        // Simple cancellation logic: just mark as CANCELLED if it's currently ACTIVE
+<span class="fc" id="L108">        Policy policy = policyRepository.findById(id)</span>
+<span class="pc" id="L109">                .orElseThrow(() -&gt; new RuntimeException(&quot;Policy not found with id: &quot; + id));</span>
+<span class="fc" id="L110">        policy.setStatus(&quot;CANCELLED&quot;);</span>
+<span class="fc" id="L111">        policyRepository.save(policy);</span>
+<span class="fc" id="L112">        return &quot;Policy cancelled successfully&quot;;</span>
+    }
+
+    @Cacheable(value = &quot;premium&quot;, key = &quot;#id&quot;)
+    public BigDecimal calculatePremium(Long id) {
+<span class="fc" id="L117">        Policy policy = policyRepository.findById(id)</span>
+<span class="pc" id="L118">                .orElseThrow(() -&gt; new RuntimeException(&quot;Policy not found with id: &quot; + id));</span>
+<span class="fc" id="L119">        return policy.getBasePremium().multiply(BigDecimal.valueOf(1.05));</span>
+    }
+
+    public String purchasePolicy(Long id, String userId) {
+<span class="fc" id="L123">        PolicyPurchaseSaga saga = sagaOrchestrator.startPurchaseSaga(userId, id);</span>
+<span class="fc" id="L124">        log.info(&quot;Purchase saga initiated: sagaId={}, policyId={}, userId={}&quot;, saga.getId(), id, userId);</span>
+<span class="fc" id="L125">        return &quot;Policy purchase saga initiated. Saga ID: &quot; + saga.getId() + &quot;. Track status for updates.&quot;;</span>
+    }
+
+    private PolicyResponse mapToResponse(Policy policy) {
+<span class="fc" id="L129">        return PolicyResponse.builder()</span>
+<span class="fc" id="L130">                .id(policy.getId())</span>
+<span class="fc" id="L131">                .name(policy.getName())</span>
+<span class="fc" id="L132">                .description(policy.getDescription())</span>
+<span class="fc" id="L133">                .basePremium(policy.getBasePremium())</span>
+<span class="fc" id="L134">                .type(policy.getType())</span>
+<span class="fc" id="L135">                .status(policy.getStatus())</span>
+<span class="fc" id="L136">                .expiryDate(policy.getExpiryDate())</span>
+<span class="fc" id="L137">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

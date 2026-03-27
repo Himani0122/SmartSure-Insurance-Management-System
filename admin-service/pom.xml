@@ -17,6 +17,8 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2023.0.1</spring-cloud.version>
+		<sonar.projectKey>smartsure-admin-service</sonar.projectKey>
+		<sonar.projectName>SmartSure - admin-service</sonar.projectName>
 	</properties>
 
 	<dependencies>
@@ -178,7 +180,7 @@
 										<limit>
 											<counter>INSTRUCTION</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.80</minimum>
+											<minimum>0.85</minimum>
 										</limit>
 									</limits>
 								</rule>
@@ -186,6 +188,11 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>4.0.0.4121</version>
 			</plugin>
 		</plugins>
 	</build>

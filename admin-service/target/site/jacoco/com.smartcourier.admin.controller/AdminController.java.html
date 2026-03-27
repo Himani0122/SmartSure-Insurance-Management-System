@@ -36,7 +36,7 @@ public class AdminController {
     })
     @PostMapping(&quot;/claims/{id}/review&quot;)
     public ResponseEntity&lt;String&gt; reviewClaim(@PathVariable Long id, @Valid @RequestBody AdminReviewRequest request) {
-<span class="nc" id="L39">        return new ResponseEntity&lt;&gt;(adminService.reviewClaim(id, request), HttpStatus.OK);</span>
+<span class="fc" id="L39">        return new ResponseEntity&lt;&gt;(adminService.reviewClaim(id, request), HttpStatus.OK);</span>
     }
 
     @Operation(summary = &quot;Get all claims&quot;, description = &quot;Returns all insurance claims in the system across all users.&quot;)
@@ -46,7 +46,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/claims&quot;)
     public ResponseEntity&lt;List&lt;ClaimResponse&gt;&gt; getAllClaims() {
-<span class="nc" id="L49">        return ResponseEntity.ok(adminService.getAllClaims());</span>
+<span class="fc" id="L49">        return ResponseEntity.ok(adminService.getAllClaims());</span>
     }
 
     @Operation(summary = &quot;Get pending claims&quot;, description = &quot;Returns all claims awaiting admin review in PENDING status.&quot;)
@@ -56,7 +56,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/claims/pending&quot;)
     public ResponseEntity&lt;List&lt;ClaimResponse&gt;&gt; getPendingClaims() {
-<span class="nc" id="L59">        return ResponseEntity.ok(adminService.getPendingClaims());</span>
+<span class="fc" id="L59">        return ResponseEntity.ok(adminService.getPendingClaims());</span>
     }
 
     @Operation(summary = &quot;Get a claim by ID&quot;, description = &quot;Returns full details of a specific claim by its ID.&quot;)
@@ -67,7 +67,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/claims/{id}&quot;)
     public ResponseEntity&lt;ClaimResponse&gt; getClaimById(@PathVariable Long id) {
-<span class="nc" id="L70">        return ResponseEntity.ok(adminService.getClaimById(id));</span>
+<span class="fc" id="L70">        return ResponseEntity.ok(adminService.getClaimById(id));</span>
     }
 
     @Operation(summary = &quot;Approve a claim&quot;, description = &quot;Approves a claim and notifies the user via RabbitMQ event.&quot;)
@@ -78,7 +78,7 @@ public class AdminController {
     })
     @PostMapping(&quot;/claims/{id}/approve&quot;)
     public ResponseEntity&lt;String&gt; approveClaim(@PathVariable Long id) {
-<span class="nc" id="L81">        return ResponseEntity.ok(adminService.approveClaim(id));</span>
+<span class="fc" id="L81">        return ResponseEntity.ok(adminService.approveClaim(id));</span>
     }
 
     @Operation(summary = &quot;Reject a claim&quot;, description = &quot;Rejects a claim and notifies the user via RabbitMQ event.&quot;)
@@ -89,7 +89,7 @@ public class AdminController {
     })
     @PostMapping(&quot;/claims/{id}/reject&quot;)
     public ResponseEntity&lt;String&gt; rejectClaim(@PathVariable Long id) {
-<span class="nc" id="L92">        return ResponseEntity.ok(adminService.rejectClaim(id));</span>
+<span class="fc" id="L92">        return ResponseEntity.ok(adminService.rejectClaim(id));</span>
     }
 
     // ===== USER MANAGEMENT =====
@@ -101,7 +101,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/users&quot;)
     public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getAllUsers() {
-<span class="nc" id="L104">        return ResponseEntity.ok(adminService.getAllUsers());</span>
+<span class="fc" id="L104">        return ResponseEntity.ok(adminService.getAllUsers());</span>
     }
 
     @Operation(summary = &quot;Block a user&quot;, description = &quot;Blocks a user account by ID, preventing them from logging in. Uses Feign to contact auth-service.&quot;)
@@ -123,7 +123,7 @@ public class AdminController {
     })
     @PutMapping(&quot;/users/{id}/activate&quot;)
     public ResponseEntity&lt;String&gt; activateUser(@PathVariable Long id) {
-<span class="nc" id="L126">        return ResponseEntity.ok(adminService.activateUser(id));</span>
+<span class="fc" id="L126">        return ResponseEntity.ok(adminService.activateUser(id));</span>
     }
 
     // ===== REPORTS =====
@@ -135,7 +135,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/reports&quot;)
     public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getGeneralReport() {
-<span class="nc" id="L138">        return ResponseEntity.ok(adminService.getGeneralReport());</span>
+<span class="fc" id="L138">        return ResponseEntity.ok(adminService.getGeneralReport());</span>
     }
 
     @Operation(summary = &quot;Get claims report&quot;, description = &quot;Returns a detailed list of all claims for reporting purposes.&quot;)
@@ -145,7 +145,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/reports/claims&quot;)
     public ResponseEntity&lt;List&lt;ClaimResponse&gt;&gt; getClaimsReport() {
-<span class="nc" id="L148">        return ResponseEntity.ok(adminService.getClaimsReport());</span>
+<span class="fc" id="L148">        return ResponseEntity.ok(adminService.getClaimsReport());</span>
     }
 
     @Operation(summary = &quot;Get policies report&quot;, description = &quot;Returns a summary of all policies with key statistics.&quot;)
@@ -155,7 +155,7 @@ public class AdminController {
     })
     @GetMapping(&quot;/reports/policies&quot;)
     public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getPoliciesReport() {
-<span class="nc" id="L158">        return ResponseEntity.ok(adminService.getPoliciesReport());</span>
+<span class="fc" id="L158">        return ResponseEntity.ok(adminService.getPoliciesReport());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

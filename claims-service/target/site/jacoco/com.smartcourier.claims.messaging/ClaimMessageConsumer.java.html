@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClaimMessageConsumer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">claims-service</a> &gt; <a href="index.source.html" class="el_package">com.smartcourier.claims.messaging</a> &gt; <span class="el_source">ClaimMessageConsumer.java</span></div><h1>ClaimMessageConsumer.java</h1><pre class="source lang-java linenums">package com.smartcourier.claims.messaging;
+
+import com.smartcourier.claims.dto.ClaimStatusUpdateEvent;
+import com.smartcourier.claims.service.ClaimsService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Service;
+
+<span class="fc" id="L10">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class ClaimMessageConsumer {
+
+    private final ClaimsService claimsService;
+
+    @RabbitListener(queues = &quot;claim.status.queue&quot;)
+    public void handleStatusUpdate(ClaimStatusUpdateEvent event) {
+<span class="fc" id="L19">        log.info(&quot;Received claim status update from RabbitMQ: claimId={}, newStatus={}&quot;, </span>
+<span class="fc" id="L20">                event.getClaimId(), event.getStatus());</span>
+        
+        try {
+<span class="fc" id="L23">            claimsService.updateClaimStatus(event.getClaimId(), event.getStatus());</span>
+<span class="fc" id="L24">            log.info(&quot;Successfully updated claim status in database for claimId={}&quot;, event.getClaimId());</span>
+<span class="fc" id="L25">        } catch (Exception e) {</span>
+<span class="fc" id="L26">            log.error(&quot;Failed to update claim status for claimId={}: {}&quot;, event.getClaimId(), e.getMessage());</span>
+            // In a real system, you might send to a Dead Letter Queue (DLQ) here
+<span class="fc" id="L28">        }</span>
+<span class="fc" id="L29">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

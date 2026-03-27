@@ -43,6 +43,8 @@ public class SecurityConfig {
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/auth/login")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/auth/refresh-token")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/**")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/favicon.ico")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new RoleHeaderFilter(), UsernamePasswordAuthenticationFilter.class);

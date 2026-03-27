@@ -34,9 +34,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 }
 
                 String authHeader = authHeaders.get(0);
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    authHeader = authHeader.substring(7);
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
                 }
+                authHeader = authHeader.substring(7);
 
                 try {
                     // ✅ Validate token
