@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">auth-service</a> &gt; <a href="index.source.html" class="el_package">com.smartcourier.auth.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">package com.smartcourier.auth.service;
+
+import com.smartcourier.auth.dto.*;
+import com.smartcourier.auth.entity.User;
+import com.smartcourier.auth.repository.UserRepository;
+import com.smartcourier.auth.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthResponse register(RegisterRequest request) {
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        if (userRepository.findByUsername(request.getUsername()).isPresent()) {</span>
+<span class="fc" id="L29">            throw new RuntimeException(&quot;Username is already taken&quot;);</span>
+        }
+<span class="fc bfc" id="L31" title="All 2 branches covered.">        if (userRepository.findByEmail(request.getEmail()).isPresent()) {</span>
+<span class="fc" id="L32">            throw new RuntimeException(&quot;Email is already registered&quot;);</span>
+        }
+
+<span class="fc" id="L35">        String refreshToken = UUID.randomUUID().toString();</span>
+<span class="fc" id="L36">        User user = User.builder()</span>
+<span class="fc" id="L37">                .username(request.getUsername())</span>
+<span class="fc" id="L38">                .email(request.getEmail())</span>
+<span class="fc" id="L39">                .password(passwordEncoder.encode(request.getPassword()))</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">                .role(request.getRole() != null ? request.getRole() : &quot;USER&quot;)</span>
+<span class="fc" id="L41">                .refreshToken(refreshToken)</span>
+<span class="fc" id="L42">                .build();</span>
+
+<span class="fc" id="L44">        userRepository.save(user);</span>
+
+<span class="fc" id="L46">        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
+<span class="fc" id="L47">        return new AuthResponse(token, refreshToken);</span>
+    }
+
+    public AuthResponse login(LoginRequest request) {
+<span class="fc" id="L51">        Optional&lt;User&gt; userOpt = userRepository.findByUsername(request.getUsername());</span>
+        
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (userOpt.isEmpty()) {</span>
+<span class="fc" id="L54">            throw new RuntimeException(&quot;Invalid username or password&quot;);</span>
+        }
+
+<span class="fc" id="L57">        User user = userOpt.get();</span>
+        
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {</span>
+<span class="fc" id="L60">            throw new RuntimeException(&quot;Invalid username or password&quot;);</span>
+        }
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (user.isBlocked()) {</span>
+<span class="fc" id="L64">            throw new RuntimeException(&quot;Your account has been blocked. Please contact the administrator.&quot;);</span>
+        }
+
+<span class="fc" id="L67">        String refreshToken = UUID.randomUUID().toString();</span>
+<span class="fc" id="L68">        user.setRefreshToken(refreshToken);</span>
+<span class="fc" id="L69">        userRepository.save(user);</span>
+
+<span class="fc" id="L71">        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
+<span class="fc" id="L72">        return new AuthResponse(token, refreshToken);</span>
+    }
+
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+<span class="fc" id="L76">        User user = userRepository.findByRefreshToken(request.getRefreshToken())</span>
+<span class="fc" id="L77">                .orElseThrow(() -&gt; new RuntimeException(&quot;Invalid refresh token&quot;));</span>
+
+<span class="fc" id="L79">        String newToken = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
+<span class="fc" id="L80">        return new AuthResponse(newToken, user.getRefreshToken());</span>
+    }
+
+    public void updateProfile(String currentUsername, UpdateProfileRequest request) {
+<span class="fc" id="L84">        User user = userRepository.findByUsername(currentUsername)</span>
+<span class="pc" id="L85">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+        
+<span class="fc" id="L87">        user.setEmail(request.getEmail());</span>
+<span class="fc" id="L88">        user.setUsername(request.getUsername());</span>
+<span class="fc" id="L89">        userRepository.save(user);</span>
+<span class="fc" id="L90">    }</span>
+
+    public void changePassword(String currentUsername, ChangePasswordRequest request) {
+<span class="fc" id="L93">        User user = userRepository.findByUsername(currentUsername)</span>
+<span class="pc" id="L94">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {</span>
+<span class="nc" id="L97">            throw new RuntimeException(&quot;Invalid old password&quot;);</span>
+        }
+
+<span class="fc" id="L100">        user.setPassword(passwordEncoder.encode(request.getNewPassword()));</span>
+<span class="fc" id="L101">        userRepository.save(user);</span>
+<span class="fc" id="L102">    }</span>
+
+    public void deleteUser(Long id) {
+<span class="fc" id="L105">        userRepository.deleteById(id);</span>
+<span class="fc" id="L106">    }</span>
+
+    public List&lt;UserResponse&gt; getAllUsers() {
+<span class="fc" id="L109">        return userRepository.findAll().stream()</span>
+<span class="fc" id="L110">                .map(user -&gt; UserResponse.builder()</span>
+<span class="fc" id="L111">                        .id(user.getId())</span>
+<span class="fc" id="L112">                        .username(user.getUsername())</span>
+<span class="fc" id="L113">                        .email(user.getEmail())</span>
+<span class="fc" id="L114">                        .role(user.getRole())</span>
+<span class="fc" id="L115">                        .build())</span>
+<span class="fc" id="L116">                .collect(Collectors.toList());</span>
+    }
+
+    public void logout(String currentUsername) {
+<span class="fc" id="L120">        User user = userRepository.findByUsername(currentUsername)</span>
+<span class="pc" id="L121">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L122">        user.setRefreshToken(null);</span>
+<span class="fc" id="L123">        userRepository.save(user);</span>
+<span class="fc" id="L124">    }</span>
+
+    @Cacheable(value = &quot;users&quot;, key = &quot;#username&quot;)
+    public UserResponse getUserByUsername(String username) {
+<span class="nc" id="L128">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L129">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="nc" id="L130">        return mapToResponse(user);</span>
+    }
+
+    public void blockUser(Long id) {
+<span class="fc" id="L134">        User user = userRepository.findById(id)</span>
+<span class="pc" id="L135">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L136">        user.setBlocked(true);</span>
+<span class="fc" id="L137">        userRepository.save(user);</span>
+<span class="fc" id="L138">    }</span>
+
+    public void activateUser(Long id) {
+<span class="fc" id="L141">        User user = userRepository.findById(id)</span>
+<span class="pc" id="L142">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L143">        user.setBlocked(false);</span>
+<span class="fc" id="L144">        userRepository.save(user);</span>
+<span class="fc" id="L145">    }</span>
+
+    private UserResponse mapToResponse(User user) {
+<span class="nc" id="L148">        return UserResponse.builder()</span>
+<span class="nc" id="L149">                .id(user.getId())</span>
+<span class="nc" id="L150">                .username(user.getUsername())</span>
+<span class="nc" id="L151">                .email(user.getEmail())</span>
+<span class="nc" id="L152">                .role(user.getRole())</span>
+<span class="nc" id="L153">                .blocked(user.isBlocked())</span>
+<span class="nc" id="L154">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,9 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+auth-service,com.smartcourier.auth.config,SecurityConfig,0,173,0,0,0,27,0,6,0,6
+auth-service,com.smartcourier.auth.config,OpenApiConfig,0,42,0,0,0,11,0,3,0,3
+auth-service,com.smartcourier.auth.config,RoleHeaderFilter,2,41,2,4,0,10,2,3,0,2
+auth-service,com.smartcourier.auth.service,AuthService,66,295,2,12,11,69,10,17,8,12
+auth-service,com.smartcourier.auth.exception,GlobalExceptionHandler,0,39,0,0,0,9,0,4,0,4
+auth-service,com.smartcourier.auth.controller,AuthController,33,43,0,0,8,9,5,6,5,6
+auth-service,com.smartcourier.auth,AuthServiceApplication,5,3,0,0,2,1,1,1,1,1
+auth-service,com.smartcourier.auth.util,JwtUtil,0,47,0,0,0,12,0,5,0,5

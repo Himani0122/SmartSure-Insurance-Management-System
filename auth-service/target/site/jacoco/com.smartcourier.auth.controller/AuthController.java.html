@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">auth-service</a> &gt; <a href="index.source.html" class="el_package">com.smartcourier.auth.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.smartcourier.auth.controller;
+
+import com.smartcourier.auth.dto.*;
+import com.smartcourier.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/api/v1/auth&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Authentication&quot;, description = &quot;APIs for user registration, login, token management, profile operations, and admin user management&quot;)
+public class AuthController {
+
+    private final AuthService authService;
+
+    @Operation(summary = &quot;Register a new user&quot;, description = &quot;Creates a new user account. Role defaults to USER if not specified.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;User registered successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Validation error or username/email already taken&quot;)
+    })
+    @PostMapping(&quot;/register&quot;)
+    public ResponseEntity&lt;AuthResponse&gt; register(@Valid @RequestBody RegisterRequest request) {
+<span class="fc" id="L31">        return new ResponseEntity&lt;&gt;(authService.register(request), HttpStatus.CREATED);</span>
+    }
+
+    @Operation(summary = &quot;Login user&quot;, description = &quot;Authenticates a user and returns a JWT access token and refresh token.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Login successful, JWT returned&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid username or password&quot;)
+    })
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;AuthResponse&gt; login(@Valid @RequestBody LoginRequest request) {
+<span class="fc" id="L41">        return ResponseEntity.ok(authService.login(request));</span>
+    }
+
+    @Operation(summary = &quot;Refresh JWT token&quot;, description = &quot;Issues a new access token using a valid refresh token.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;New JWT token returned&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid or expired refresh token&quot;)
+    })
+    @PostMapping(&quot;/refresh-token&quot;)
+    public ResponseEntity&lt;AuthResponse&gt; refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+<span class="nc" id="L51">        return ResponseEntity.ok(authService.refreshToken(request));</span>
+    }
+
+    @Operation(summary = &quot;Update user profile&quot;, description = &quot;Allows an authenticated user to update their username and email.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Profile updated successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Validation error&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @PutMapping(&quot;/update-profile&quot;)
+    @PreAuthorize(&quot;hasRole('USER')&quot;)
+    public ResponseEntity&lt;String&gt; updateProfile(@RequestHeader(&quot;X-Username&quot;) String username,
+                                               @Valid @RequestBody UpdateProfileRequest request) {
+<span class="fc" id="L64">        authService.updateProfile(username, request);</span>
+<span class="fc" id="L65">        return ResponseEntity.ok(&quot;Profile updated successfully&quot;);</span>
+    }
+
+    @Operation(summary = &quot;Change password&quot;, description = &quot;Allows an authenticated user to change their password. New password must be 8+ chars with 1 uppercase and 1 digit.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Password changed successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Old password is incorrect or new password fails validation&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @PutMapping(&quot;/change-password&quot;)
+    @PreAuthorize(&quot;hasRole('USER')&quot;)
+    public ResponseEntity&lt;String&gt; changePassword(@RequestHeader(&quot;X-Username&quot;) String username,
+                                                @Valid @RequestBody ChangePasswordRequest request) {
+<span class="fc" id="L78">        authService.changePassword(username, request);</span>
+<span class="fc" id="L79">        return ResponseEntity.ok(&quot;Password changed successfully&quot;);</span>
+    }
+
+    @Operation(summary = &quot;Delete a user (Admin only)&quot;, description = &quot;Permanently deletes a user account by ID.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User deleted successfully&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    @DeleteMapping(&quot;/delete/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;String&gt; deleteUser(@PathVariable Long id) {
+<span class="fc" id="L91">        authService.deleteUser(id);</span>
+<span class="fc" id="L92">        return ResponseEntity.ok(&quot;User deleted successfully&quot;);</span>
+    }
+
+    @Operation(summary = &quot;Get all users (Admin only)&quot;, description = &quot;Returns a list of all registered users.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;List of users returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/all-users&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;java.util.List&lt;UserResponse&gt;&gt; getAllUsers() {
+<span class="fc" id="L103">        return ResponseEntity.ok(authService.getAllUsers());</span>
+    }
+
+    @Operation(summary = &quot;Logout user&quot;, description = &quot;Invalidates the user's refresh token to log them out.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Logged out successfully&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    @PostMapping(&quot;/logout&quot;)
+    @PreAuthorize(&quot;hasAnyRole('USER','ADMIN')&quot;)
+    public ResponseEntity&lt;String&gt; logout(@RequestHeader(&quot;X-Username&quot;) String username) {
+<span class="nc" id="L114">        authService.logout(username);</span>
+<span class="nc" id="L115">        return ResponseEntity.ok(&quot;Logged out successfully&quot;);</span>
+    }
+
+    @Operation(summary = &quot;Get user by username&quot;, description = &quot;Returns profile details of a specific user. Users can only fetch their own profile; ADMIN can fetch any.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User profile returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    @GetMapping(&quot;/user/{username}&quot;)
+    @PreAuthorize(&quot;#username == authentication.name or hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;UserResponse&gt; getUser(@PathVariable String username) {
+<span class="nc" id="L127">        return ResponseEntity.ok(authService.getUserByUsername(username));</span>
+    }
+
+    @Operation(summary = &quot;Block a user (Admin only)&quot;, description = &quot;Blocks a user account by ID, preventing login.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User blocked successfully&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    @PutMapping(&quot;/users/{id}/block&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;String&gt; blockUser(@PathVariable Long id) {
+<span class="nc" id="L139">        authService.blockUser(id);</span>
+<span class="nc" id="L140">        return ResponseEntity.ok(&quot;User blocked successfully&quot;);</span>
+    }
+
+    @Operation(summary = &quot;Activate a user (Admin only)&quot;, description = &quot;Unblocks a previously blocked user account.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User activated successfully&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    @PutMapping(&quot;/users/{id}/activate&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;String&gt; activateUser(@PathVariable Long id) {
+<span class="nc" id="L152">        authService.activateUser(id);</span>
+<span class="nc" id="L153">        return ResponseEntity.ok(&quot;User activated successfully&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
