@@ -1,48 +1,35 @@
 package com.smartcourier.claims.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String QUEUE_NAME = "claim.status.queue";
-    public static final String EXCHANGE_NAME = "claim.exchange";
-    public static final String ROUTING_KEY = "claim.routing.key";
+    public static final String CLAIM_STATUS_QUEUE = "claim.status.queue";
+    public static final String CLAIM_EXCHANGE = "claim.exchange";
+    public static final String CLAIM_ROUTING_KEY = "claim.status.key";
 
     @Bean
-    public MessageConverter messageConverter() {
-        return new Jackson2JsonMessageConverter();
-    }
-
-    @Bean("claimStatusQueue")
     public Queue claimStatusQueue() {
-        return new Queue(QUEUE_NAME, true);
+        return new Queue(CLAIM_STATUS_QUEUE, true);
     }
 
-    @Bean("claimExchange")
+    @Bean
     public DirectExchange claimExchange() {
-        return new DirectExchange(EXCHANGE_NAME);
+        return new DirectExchange(CLAIM_EXCHANGE);
     }
 
     @Bean
-    public Binding claimBinding(
-            @Qualifier("claimStatusQueue") Queue queue,
-            @Qualifier("claimExchange") DirectExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    public Binding claimBinding(Queue claimStatusQueue, DirectExchange claimExchange) {
+        return BindingBuilder.bind(claimStatusQueue).to(claimExchange).with(CLAIM_ROUTING_KEY);
     }
 
     @Bean
-    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
-        return new RabbitAdmin(connectionFactory);
+    public MessageConverter jsonMessageConverter() {
+        return new Jackson2JsonMessageConverter();
     }
 }

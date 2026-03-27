@@ -13,17 +13,18 @@ public class ClaimEventProducer {
 
     private final RabbitTemplate rabbitTemplate;
 
+    public static final String EXCHANGE = "claim.exchange";
+    public static final String ROUTING_KEY = "claim.status.key";
+
     public void sendClaimStatusUpdate(Long claimId, String status) {
-        log.info("Sending claim status update -> ID: {}, Status: {}", claimId, status);
+        ClaimStatusUpdateEvent event = new ClaimStatusUpdateEvent(claimId, status);
+        sendClaimStatusUpdate(event);
+    }
 
-        ClaimStatusUpdateEvent event = new ClaimStatusUpdateEvent();
-        event.setClaimId(claimId);
-        event.setStatus(status);
-
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.ROUTING_KEY,
-                event
-        );
+    public void sendClaimStatusUpdate(ClaimStatusUpdateEvent event) {
+        log.info("Sending claim status update to RabbitMQ: claimId={}, status={}", 
+                event.getClaimId(), event.getStatus());
+        
+        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, event);
     }
 }

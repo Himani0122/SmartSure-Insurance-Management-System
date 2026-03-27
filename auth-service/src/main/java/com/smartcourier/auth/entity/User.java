@@ -28,4 +28,11 @@ public class User {
 
     @Column(nullable = false)
     private String role;
+
+    @Column(name = "refresh_token", unique = true)
+    private String refreshToken;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean blocked = false;
 }

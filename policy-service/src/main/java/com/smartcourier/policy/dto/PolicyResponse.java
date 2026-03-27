@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -20,4 +21,6 @@ public class PolicyResponse implements Serializable {
     private String description;
     private BigDecimal basePremium;
     private String type;
+    private String status;
+    private LocalDateTime expiryDate;
 }

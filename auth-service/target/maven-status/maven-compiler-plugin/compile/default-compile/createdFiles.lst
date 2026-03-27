@@ -1,7 +1,9 @@
 com\smartcourier\auth\config\OpenApiConfig.class
 com\smartcourier\auth\AuthServiceApplication.class
 com\smartcourier\auth\exception\GlobalExceptionHandler.class
+com\smartcourier\auth\dto\UpdateProfileRequest.class
 com\smartcourier\auth\dto\UserResponse$UserResponseBuilder.class
+com\smartcourier\auth\dto\ChangePasswordRequest.class
 com\smartcourier\auth\dto\AuthResponse.class
 com\smartcourier\auth\repository\UserRepository.class
 com\smartcourier\auth\dto\LoginRequest.class
@@ -13,3 +15,5 @@ com\smartcourier\auth\dto\RegisterRequest.class
 com\smartcourier\auth\controller\AuthController.class
 com\smartcourier\auth\service\AuthService.class
 com\smartcourier\auth\entity\User$UserBuilder.class
+com\smartcourier\auth\config\RoleHeaderFilter.class
+com\smartcourier\auth\dto\RefreshTokenRequest.class

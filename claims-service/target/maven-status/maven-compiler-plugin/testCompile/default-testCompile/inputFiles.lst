@@ -1,7 +1,8 @@
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\messaging\ClaimMessageConsumerTest.java
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\ClaimsServiceIntegrationTest.java
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\service\ClaimsServiceTest.java
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\service\FileStorageUtilTest.java
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\exception\GlobalExceptionHandlerTest.java
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\ClaimsServiceApplicationTest.java
-c:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\controller\ClaimsControllerTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\service\OutboxServiceTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\messaging\ClaimMessageConsumerTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\ClaimsServiceIntegrationTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\service\ClaimsServiceTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\service\FileStorageUtilTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\exception\GlobalExceptionHandlerTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\ClaimsServiceApplicationTest.java
+C:\Sprint_Project\claims-service\src\test\java\com\smartcourier\claims\controller\ClaimsControllerTest.java

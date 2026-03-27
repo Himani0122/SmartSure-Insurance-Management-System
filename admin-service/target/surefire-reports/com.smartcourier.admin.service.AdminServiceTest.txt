@@ -1,4 +1,16 @@
 -------------------------------------------------------------------------------
 Test set: com.smartcourier.admin.service.AdminServiceTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.065 s -- in com.smartcourier.admin.service.AdminServiceTest
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.003 s <<< FAILURE! -- in com.smartcourier.admin.service.AdminServiceTest
+com.smartcourier.admin.service.AdminServiceTest -- Time elapsed: 0.003 s <<< ERROR!
+java.lang.NoClassDefFoundError: com/smartcourier/admin/feign/ClaimsClient
+	at java.base/java.lang.Class.getDeclaredFields0(Native Method)
+	at java.base/java.lang.Class.privateGetDeclaredFields(Class.java:3299)
+	at java.base/java.lang.Class.getDeclaredFields(Class.java:2373)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.ClassNotFoundException: com.smartcourier.admin.feign.ClaimsClient
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+	... 4 more
+

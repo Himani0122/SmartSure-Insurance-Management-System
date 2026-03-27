@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,4 +21,5 @@ public class ClaimResponse implements Serializable {
     private String status;
     private String documentPath;
     private String idempotencyKey;
+    private List<ClaimDocumentResponse> documents;
 }

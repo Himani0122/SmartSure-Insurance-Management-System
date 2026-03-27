@@ -1,84 +1,88 @@
 package com.smartcourier.claims.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcourier.claims.dto.ClaimInitiateRequest;
 import com.smartcourier.claims.dto.ClaimResponse;
 import com.smartcourier.claims.service.ClaimsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class ClaimsControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private ClaimsService claimsService;
 
-    @InjectMocks
-    private ClaimsController claimsController;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private ClaimResponse testResponse;
-    private ClaimInitiateRequest testRequest;
 
     @BeforeEach
     void setUp() {
         testResponse = ClaimResponse.builder()
                 .id(1L)
-                .policyId(1L)
-                .username("johndoe")
-                .description("Test description")
                 .status("PENDING")
+                .username("testusr")
                 .build();
-
-        testRequest = new ClaimInitiateRequest();
-        testRequest.setPolicyId(1L);
-        testRequest.setDescription("Test description");
-        testRequest.setIdempotencyKey("uid-test");
     }
 
     @Test
-    void uploadDocument_ShouldReturnOkAndPath() {
-        MultipartFile file = new MockMultipartFile("file", "content".getBytes());
-        when(claimsService.uploadDocument(any(MultipartFile.class), eq("johndoe"))).thenReturn("/tmp/uploads/file.txt");
+    void getAllClaims_ShouldReturnList() throws Exception {
+        when(claimsService.getAllClaims()).thenReturn(List.of(testResponse));
 
-        ResponseEntity<String> response = claimsController.uploadDocument(file, "johndoe");
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("/tmp/uploads/file.txt", response.getBody());
+        mockMvc.perform(get("/api/v1/claims")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
-    void initiateClaim_ShouldReturnCreated() {
-        when(claimsService.initiateClaim(any(ClaimInitiateRequest.class), eq("johndoe"))).thenReturn(testResponse);
+    void initiateClaim_ShouldReturnCreated() throws Exception {
+        ClaimInitiateRequest request = new ClaimInitiateRequest();
+        request.setPolicyId(1L);
+        request.setDescription("Hospitalization claim for surgery in March 2026"); // Fixed: 10+ chars
+        request.setIdempotencyKey("CLAIM-20260327-001"); // Fixed: 5+ chars
 
-        ResponseEntity<ClaimResponse> response = claimsController.initiateClaim(testRequest, "johndoe");
+        when(claimsService.initiateClaim(any(), anyString())).thenReturn(testResponse);
 
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(1L, response.getBody().getId());
+        mockMvc.perform(post("/api/v1/claims/initiate-claim")
+                        .header("X-Username", "testusr")
+                        .header("X-Role", "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    void trackClaim_ShouldReturnOk() {
-        when(claimsService.trackClaim(eq(1L))).thenReturn(testResponse);
+    void addDocument_ShouldReturnOk() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
+        when(claimsService.addDocument(anyLong(), any(), anyString())).thenReturn(testResponse);
 
-        ResponseEntity<ClaimResponse> response = claimsController.trackClaim(1L);
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1L, response.getBody().getId());
+        mockMvc.perform(multipart("/api/v1/claims/1/add-document")
+                        .file(file)
+                        .header("X-Username", "testusr")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isOk());
     }
 }

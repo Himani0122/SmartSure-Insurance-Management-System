@@ -4,23 +4,31 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Configuration
-<span class="fc" id="L11">public class OpenApiConfig {</span>
+<span class="nc" id="L14">public class OpenApiConfig {</span>
 
     @Bean
     public OpenAPI customOpenAPI() {
-<span class="fc" id="L15">        return new OpenAPI()</span>
-<span class="fc" id="L16">                .addSecurityItem(new SecurityRequirement().addList(&quot;Bearer Authentication&quot;))</span>
-<span class="fc" id="L17">                .components(new Components().addSecuritySchemes(&quot;Bearer Authentication&quot;, createAPIKeyScheme()));</span>
+<span class="nc" id="L18">        Server gatewayServer = new Server()</span>
+<span class="nc" id="L19">                .url(&quot;http://localhost:8090&quot;)</span>
+<span class="nc" id="L20">                .description(&quot;API Gateway&quot;);</span>
+
+<span class="nc" id="L22">        return new OpenAPI()</span>
+<span class="nc" id="L23">                .servers(List.of(gatewayServer))</span>
+<span class="nc" id="L24">                .addSecurityItem(new SecurityRequirement().addList(&quot;Bearer Authentication&quot;))</span>
+<span class="nc" id="L25">                .components(new Components().addSecuritySchemes(&quot;Bearer Authentication&quot;, createAPIKeyScheme()));</span>
     }
 
     private SecurityScheme createAPIKeyScheme() {
-<span class="fc" id="L21">        return new SecurityScheme().type(SecurityScheme.Type.HTTP)</span>
-<span class="fc" id="L22">                .bearerFormat(&quot;JWT&quot;)</span>
-<span class="fc" id="L23">                .scheme(&quot;bearer&quot;);</span>
+<span class="nc" id="L29">        return new SecurityScheme().type(SecurityScheme.Type.HTTP)</span>
+<span class="nc" id="L30">                .bearerFormat(&quot;JWT&quot;)</span>
+<span class="nc" id="L31">                .scheme(&quot;bearer&quot;);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

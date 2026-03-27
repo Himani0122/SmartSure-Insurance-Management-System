@@ -13,10 +13,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -36,8 +39,13 @@ public class SecurityConfig {
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/*/swagger-ui/**")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/swagger-ui.html")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/*/swagger-ui.html")).permitAll()
-                        .anyRequest().permitAll()
-                );
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/auth/register")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/auth/login")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/auth/refresh-token")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/**")).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new RoleHeaderFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

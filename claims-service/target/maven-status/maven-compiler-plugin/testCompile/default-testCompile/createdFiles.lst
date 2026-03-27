@@ -1,0 +1,9 @@
+com\smartcourier\claims\messaging\ClaimMessageConsumerTest.class
+com\smartcourier\claims\exception\GlobalExceptionHandlerTest.class
+com\smartcourier\claims\service\OutboxServiceTest$1.class
+com\smartcourier\claims\service\OutboxServiceTest.class
+com\smartcourier\claims\service\ClaimsServiceTest.class
+com\smartcourier\claims\controller\ClaimsControllerTest.class
+com\smartcourier\claims\ClaimsServiceIntegrationTest.class
+com\smartcourier\claims\service\FileStorageUtilTest.class
+com\smartcourier\claims\ClaimsServiceApplicationTest.class

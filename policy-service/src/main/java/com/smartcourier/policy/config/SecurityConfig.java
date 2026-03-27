@@ -2,6 +2,7 @@ package com.smartcourier.policy.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,6 +19,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean
@@ -33,9 +35,8 @@ public class SecurityConfig {
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/*/swagger-ui/**")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/swagger-ui.html")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/*/swagger-ui.html")).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/policies").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/policies").hasAnyRole("ADMIN", "USER")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/policies/*/purchase").hasRole("USER")
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/**")).permitAll()
+                        // Method-level security (@PreAuthorize) will handle the rest
                         .anyRequest().authenticated()
                 );
         return http.build();

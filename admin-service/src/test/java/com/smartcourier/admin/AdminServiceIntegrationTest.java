@@ -3,6 +3,8 @@ package com.smartcourier.admin;
 import com.smartcourier.admin.dto.AdminReviewRequest;
 import com.smartcourier.admin.dto.ClaimResponse;
 import com.smartcourier.admin.feign.ClaimsClient;
+import com.smartcourier.admin.feign.AuthClient;
+import com.smartcourier.admin.feign.PolicyClient;
 import com.smartcourier.admin.messaging.ClaimEventProducer;
 import com.smartcourier.admin.service.AdminService;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,12 @@ class AdminServiceIntegrationTest {
     private ClaimsClient claimsClient;
 
     @MockBean
+    private AuthClient authClient;
+
+    @MockBean
+    private PolicyClient policyClient;
+
+    @MockBean
     private ClaimEventProducer claimEventProducer;
 
     @Test
@@ -34,7 +42,7 @@ class AdminServiceIntegrationTest {
                 .id(1L)
                 .status("PENDING")
                 .build();
-        when(claimsClient.trackClaim(1L)).thenReturn(claimResponse);
+        when(claimsClient.getClaimById(1L)).thenReturn(claimResponse);
 
         // Admin Review Request
         AdminReviewRequest request = new AdminReviewRequest();
@@ -46,7 +54,7 @@ class AdminServiceIntegrationTest {
         assertEquals("Review submitted successfully. Claim status update initiated via queue.", result);
 
         // Verify interactions
-        verify(claimsClient, times(1)).trackClaim(1L);
+        verify(claimsClient, times(1)).getClaimById(1L);
         verify(claimEventProducer, times(1)).sendClaimStatusUpdate(1L, "APPROVED");
     }
 }

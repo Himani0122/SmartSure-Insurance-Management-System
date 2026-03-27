@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -29,4 +30,10 @@ public class Policy {
     private BigDecimal basePremium;
 
     private String type;
+    
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'ACTIVE'")
+    private String status; // ACTIVE, EXPIRED, CANCELLED
+
+    @Column(nullable = false, columnDefinition = "timestamp default current_timestamp")
+    private LocalDateTime expiryDate;
 }

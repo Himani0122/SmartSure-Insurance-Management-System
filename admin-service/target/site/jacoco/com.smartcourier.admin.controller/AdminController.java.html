@@ -1,23 +1,161 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin-service</a> &gt; <a href="index.source.html" class="el_package">com.smartcourier.admin.controller</a> &gt; <span class="el_source">AdminController.java</span></div><h1>AdminController.java</h1><pre class="source lang-java linenums">package com.smartcourier.admin.controller;
 
 import com.smartcourier.admin.dto.AdminReviewRequest;
+import com.smartcourier.admin.dto.ClaimResponse;
 import com.smartcourier.admin.service.AdminService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(&quot;/api/v1/admin&quot;)
 @RequiredArgsConstructor
+@PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+@Tag(name = &quot;Admin Operations&quot;, description = &quot;APIs for admin claim management, user management, and system reporting — ADMIN role required for all endpoints&quot;)
 public class AdminController {
 
     private final AdminService adminService;
 
+    // ===== CLAIM MANAGEMENT =====
+
+    @Operation(summary = &quot;Review a claim&quot;, description = &quot;Submit a formal review decision (APPROVED or REJECTED) with optional comments for a specific claim.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Claim reviewed successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid status — must be APPROVED or REJECTED&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Claim not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
     @PostMapping(&quot;/claims/{id}/review&quot;)
     public ResponseEntity&lt;String&gt; reviewClaim(@PathVariable Long id, @Valid @RequestBody AdminReviewRequest request) {
-<span class="nc" id="L20">        return new ResponseEntity&lt;&gt;(adminService.reviewClaim(id, request), HttpStatus.OK);</span>
+<span class="nc" id="L39">        return new ResponseEntity&lt;&gt;(adminService.reviewClaim(id, request), HttpStatus.OK);</span>
+    }
+
+    @Operation(summary = &quot;Get all claims&quot;, description = &quot;Returns all insurance claims in the system across all users.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;All claims returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/claims&quot;)
+    public ResponseEntity&lt;List&lt;ClaimResponse&gt;&gt; getAllClaims() {
+<span class="nc" id="L49">        return ResponseEntity.ok(adminService.getAllClaims());</span>
+    }
+
+    @Operation(summary = &quot;Get pending claims&quot;, description = &quot;Returns all claims awaiting admin review in PENDING status.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Pending claims returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/claims/pending&quot;)
+    public ResponseEntity&lt;List&lt;ClaimResponse&gt;&gt; getPendingClaims() {
+<span class="nc" id="L59">        return ResponseEntity.ok(adminService.getPendingClaims());</span>
+    }
+
+    @Operation(summary = &quot;Get a claim by ID&quot;, description = &quot;Returns full details of a specific claim by its ID.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Claim details returned&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Claim not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/claims/{id}&quot;)
+    public ResponseEntity&lt;ClaimResponse&gt; getClaimById(@PathVariable Long id) {
+<span class="nc" id="L70">        return ResponseEntity.ok(adminService.getClaimById(id));</span>
+    }
+
+    @Operation(summary = &quot;Approve a claim&quot;, description = &quot;Approves a claim and notifies the user via RabbitMQ event.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Claim approved successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Claim not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @PostMapping(&quot;/claims/{id}/approve&quot;)
+    public ResponseEntity&lt;String&gt; approveClaim(@PathVariable Long id) {
+<span class="nc" id="L81">        return ResponseEntity.ok(adminService.approveClaim(id));</span>
+    }
+
+    @Operation(summary = &quot;Reject a claim&quot;, description = &quot;Rejects a claim and notifies the user via RabbitMQ event.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Claim rejected successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Claim not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @PostMapping(&quot;/claims/{id}/reject&quot;)
+    public ResponseEntity&lt;String&gt; rejectClaim(@PathVariable Long id) {
+<span class="nc" id="L92">        return ResponseEntity.ok(adminService.rejectClaim(id));</span>
+    }
+
+    // ===== USER MANAGEMENT =====
+
+    @Operation(summary = &quot;Get all users&quot;, description = &quot;Returns a list of all registered users via Feign call to auth-service.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User list returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/users&quot;)
+    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getAllUsers() {
+<span class="nc" id="L104">        return ResponseEntity.ok(adminService.getAllUsers());</span>
+    }
+
+    @Operation(summary = &quot;Block a user&quot;, description = &quot;Blocks a user account by ID, preventing them from logging in. Uses Feign to contact auth-service.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User blocked successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @PutMapping(&quot;/users/{id}/block&quot;)
+    public ResponseEntity&lt;String&gt; blockUser(@PathVariable Long id) {
+<span class="nc" id="L115">        return ResponseEntity.ok(adminService.blockUser(id));</span>
+    }
+
+    @Operation(summary = &quot;Activate a user&quot;, description = &quot;Unblocks a previously blocked user, restoring their access.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User activated successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @PutMapping(&quot;/users/{id}/activate&quot;)
+    public ResponseEntity&lt;String&gt; activateUser(@PathVariable Long id) {
+<span class="nc" id="L126">        return ResponseEntity.ok(adminService.activateUser(id));</span>
+    }
+
+    // ===== REPORTS =====
+
+    @Operation(summary = &quot;Get general system report&quot;, description = &quot;Returns an overview report with claim counts, approval rates, and system statistics.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Report data returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/reports&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getGeneralReport() {
+<span class="nc" id="L138">        return ResponseEntity.ok(adminService.getGeneralReport());</span>
+    }
+
+    @Operation(summary = &quot;Get claims report&quot;, description = &quot;Returns a detailed list of all claims for reporting purposes.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Claims report returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/reports/claims&quot;)
+    public ResponseEntity&lt;List&lt;ClaimResponse&gt;&gt; getClaimsReport() {
+<span class="nc" id="L148">        return ResponseEntity.ok(adminService.getClaimsReport());</span>
+    }
+
+    @Operation(summary = &quot;Get policies report&quot;, description = &quot;Returns a summary of all policies with key statistics.&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Policies report returned&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied — ADMIN role required&quot;)
+    })
+    @GetMapping(&quot;/reports/policies&quot;)
+    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getPoliciesReport() {
+<span class="nc" id="L158">        return ResponseEntity.ok(adminService.getPoliciesReport());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

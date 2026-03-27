@@ -6,25 +6,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
-<span class="fc" id="L9">@Slf4j</span>
+<span class="nc" id="L9">@Slf4j</span>
 @Service
 @RequiredArgsConstructor
 public class ClaimEventProducer {
 
     private final RabbitTemplate rabbitTemplate;
 
+    public static final String EXCHANGE = &quot;claim.exchange&quot;;
+    public static final String ROUTING_KEY = &quot;claim.status.key&quot;;
+
     public void sendClaimStatusUpdate(Long claimId, String status) {
-<span class="fc" id="L17">        log.info(&quot;Sending claim status update -&gt; ID: {}, Status: {}&quot;, claimId, status);</span>
+<span class="nc" id="L20">        ClaimStatusUpdateEvent event = new ClaimStatusUpdateEvent(claimId, status);</span>
+<span class="nc" id="L21">        sendClaimStatusUpdate(event);</span>
+<span class="nc" id="L22">    }</span>
 
-<span class="fc" id="L19">        ClaimStatusUpdateEvent event = new ClaimStatusUpdateEvent();</span>
-<span class="fc" id="L20">        event.setClaimId(claimId);</span>
-<span class="fc" id="L21">        event.setStatus(status);</span>
-
-<span class="fc" id="L23">        rabbitTemplate.convertAndSend(</span>
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.ROUTING_KEY,
-                event
-        );
-<span class="fc" id="L28">    }</span>
+    public void sendClaimStatusUpdate(ClaimStatusUpdateEvent event) {
+<span class="nc" id="L25">        log.info(&quot;Sending claim status update to RabbitMQ: claimId={}, status={}&quot;, </span>
+<span class="nc" id="L26">                event.getClaimId(), event.getStatus());</span>
+        
+<span class="nc" id="L28">        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, event);</span>
+<span class="nc" id="L29">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

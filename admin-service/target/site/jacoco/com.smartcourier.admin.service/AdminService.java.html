@@ -2,39 +2,107 @@
 
 import com.smartcourier.admin.dto.AdminReviewRequest;
 import com.smartcourier.admin.dto.ClaimResponse;
+import com.smartcourier.admin.feign.AuthClient;
 import com.smartcourier.admin.feign.ClaimsClient;
+import com.smartcourier.admin.feign.PolicyClient;
 import com.smartcourier.admin.messaging.ClaimEventProducer;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
-<span class="fc" id="L13">@Slf4j</span>
+<span class="nc" id="L18">@Slf4j</span>
 @Service
 @RequiredArgsConstructor
 public class AdminService {
 
     private final ClaimsClient claimsClient;
+    private final AuthClient authClient;
+    private final PolicyClient policyClient;
     private final ClaimEventProducer claimEventProducer;
 
     @CircuitBreaker(name = &quot;claimsService&quot;, fallbackMethod = &quot;reviewClaimFallback&quot;)
     @Retry(name = &quot;claimsService&quot;, fallbackMethod = &quot;reviewClaimFallback&quot;)
     public String reviewClaim(Long claimId, AdminReviewRequest request) {
-<span class="fc" id="L24">        log.info(&quot;Admin tracking claim {}&quot;, claimId);</span>
-        // Track claim using Feign Client
-<span class="fc" id="L26">        ClaimResponse claim = claimsClient.trackClaim(claimId);</span>
+<span class="nc" id="L31">        log.info(&quot;Admin tracking claim {}&quot;, claimId);</span>
+<span class="nc" id="L32">        ClaimResponse claim = claimsClient.getClaimById(claimId);</span>
         
-<span class="fc" id="L28">        log.info(&quot;Claim found. Issuing update via RabbitMQ for status: {}&quot;, request.getStatus());</span>
-        // Since Admin only reviews, we send message to update status
-<span class="fc" id="L30">        claimEventProducer.sendClaimStatusUpdate(claim.getId(), request.getStatus());</span>
+<span class="nc" id="L34">        log.info(&quot;Claim found. Issuing update via RabbitMQ for status: {}&quot;, request.getStatus());</span>
+<span class="nc" id="L35">        claimEventProducer.sendClaimStatusUpdate(claim.getId(), request.getStatus());</span>
         
-<span class="fc" id="L32">        return &quot;Review submitted successfully. Claim status update initiated via queue.&quot;;</span>
+<span class="nc" id="L37">        return &quot;Review submitted successfully. Claim status update initiated via queue.&quot;;</span>
     }
 
     public String reviewClaimFallback(Long claimId, AdminReviewRequest request, Throwable ex) {
-<span class="nc" id="L36">        log.error(&quot;Failed to reach Claims Service for claim {}, taking fallback path. Error: {}&quot;, claimId, ex.getMessage());</span>
-<span class="nc" id="L37">        return &quot;Claims Service is currently unavailable. Review request has been locally logged but not processed.&quot;;</span>
+<span class="nc" id="L41">        log.error(&quot;Failed to reach Claims Service for claim {}, taking fallback path. Error: {}&quot;, claimId, ex.getMessage());</span>
+<span class="nc" id="L42">        return &quot;Claims Service is currently unavailable. Review request has been locally logged but not processed.&quot;;</span>
+    }
+
+    // CLAIM MANAGEMENT
+    public List&lt;ClaimResponse&gt; getAllClaims() {
+<span class="nc" id="L47">        return claimsClient.getAllClaims();</span>
+    }
+
+    public List&lt;ClaimResponse&gt; getPendingClaims() {
+<span class="nc" id="L51">        return claimsClient.getPendingClaims();</span>
+    }
+
+    public ClaimResponse getClaimById(Long id) {
+<span class="nc" id="L55">        return claimsClient.getClaimById(id);</span>
+    }
+
+    public String approveClaim(Long id) {
+<span class="nc" id="L59">        AdminReviewRequest request = new AdminReviewRequest();</span>
+<span class="nc" id="L60">        request.setStatus(&quot;APPROVED&quot;);</span>
+<span class="nc" id="L61">        request.setComments(&quot;Approved by Admin&quot;);</span>
+<span class="nc" id="L62">        return reviewClaim(id, request);</span>
+    }
+
+    public String rejectClaim(Long id) {
+<span class="nc" id="L66">        AdminReviewRequest request = new AdminReviewRequest();</span>
+<span class="nc" id="L67">        request.setStatus(&quot;REJECTED&quot;);</span>
+<span class="nc" id="L68">        request.setComments(&quot;Rejected by Admin&quot;);</span>
+<span class="nc" id="L69">        return reviewClaim(id, request);</span>
+    }
+
+    // USER MANAGEMENT
+    public List&lt;Map&lt;String, Object&gt;&gt; getAllUsers() {
+<span class="nc" id="L74">        return authClient.getAllUsers();</span>
+    }
+
+    public String blockUser(Long id) {
+<span class="nc" id="L78">        authClient.blockUser(id);</span>
+<span class="nc" id="L79">        return &quot;User blocked successfully&quot;;</span>
+    }
+
+    public String activateUser(Long id) {
+<span class="nc" id="L83">        authClient.activateUser(id);</span>
+<span class="nc" id="L84">        return &quot;User activated successfully&quot;;</span>
+    }
+
+    // REPORTS
+    public Map&lt;String, Object&gt; getGeneralReport() {
+<span class="nc" id="L89">        Map&lt;String, Object&gt; report = new HashMap&lt;&gt;();</span>
+        try {
+<span class="nc" id="L91">            report.put(&quot;totalClaims&quot;, claimsClient.getAllClaims().size());</span>
+<span class="nc" id="L92">            report.put(&quot;totalUsers&quot;, authClient.getAllUsers().size());</span>
+<span class="nc" id="L93">            report.put(&quot;totalPolicies&quot;, policyClient.getPolicies().size());</span>
+<span class="nc" id="L94">        } catch (Exception e) {</span>
+<span class="nc" id="L95">            log.warn(&quot;Failed to fetch complete report data: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L96">        }</span>
+<span class="nc" id="L97">        return report;</span>
+    }
+
+    public List&lt;ClaimResponse&gt; getClaimsReport() {
+<span class="nc" id="L101">        return claimsClient.getAllClaims();</span>
+    }
+
+    public List&lt;Map&lt;String, Object&gt;&gt; getPoliciesReport() {
+<span class="nc" id="L105">        return policyClient.getPolicies();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

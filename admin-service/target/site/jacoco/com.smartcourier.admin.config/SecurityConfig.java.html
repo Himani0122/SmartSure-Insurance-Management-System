@@ -12,36 +12,45 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
-<span class="fc" id="L19">public class SecurityConfig {</span>
+@EnableMethodSecurity(prePostEnabled = true)
+<span class="nc" id="L22">public class SecurityConfig {</span>
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-<span class="fc" id="L23">        http</span>
-<span class="fc" id="L24">                .cors(cors -&gt; cors.configurationSource(corsConfigurationSource()))</span>
-<span class="fc" id="L25">                .csrf(AbstractHttpConfigurer::disable)</span>
-<span class="fc" id="L26">                .addFilterBefore(new RoleHeaderFilter(), UsernamePasswordAuthenticationFilter.class)</span>
-<span class="fc" id="L27">                .authorizeHttpRequests(auth -&gt; auth</span>
-<span class="fc" id="L28">                        .requestMatchers(&quot;/v3/api-docs/**&quot;, &quot;/swagger-ui/**&quot;, &quot;/swagger-ui.html&quot;).permitAll()</span>
-<span class="fc" id="L29">                        .anyRequest().hasRole(&quot;ADMIN&quot;)</span>
+<span class="nc" id="L26">        http</span>
+<span class="nc" id="L27">                .cors(cors -&gt; cors.configurationSource(corsConfigurationSource()))</span>
+<span class="nc" id="L28">                .csrf(AbstractHttpConfigurer::disable)</span>
+<span class="nc" id="L29">                .addFilterBefore(new RoleHeaderFilter(), UsernamePasswordAuthenticationFilter.class)</span>
+<span class="nc" id="L30">                .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="nc" id="L31">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/v3/api-docs/**&quot;)).permitAll()</span>
+<span class="nc" id="L32">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/api/v1/*/v3/api-docs/**&quot;)).permitAll()</span>
+<span class="nc" id="L33">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/swagger-ui/**&quot;)).permitAll()</span>
+<span class="nc" id="L34">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/api/v1/*/swagger-ui/**&quot;)).permitAll()</span>
+<span class="nc" id="L35">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/swagger-ui.html&quot;)).permitAll()</span>
+<span class="nc" id="L36">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/api/v1/*/swagger-ui.html&quot;)).permitAll()</span>
+<span class="nc" id="L37">                        .requestMatchers(AntPathRequestMatcher.antMatcher(&quot;/actuator/**&quot;)).permitAll()</span>
+<span class="nc" id="L38">                        .anyRequest().authenticated()</span>
                 );
-<span class="fc" id="L31">        return http.build();</span>
+<span class="nc" id="L40">        return http.build();</span>
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-<span class="fc" id="L36">        CorsConfiguration configuration = new CorsConfiguration();</span>
-<span class="fc" id="L37">        configuration.setAllowedOriginPatterns(List.of(&quot;*&quot;));</span>
-<span class="fc" id="L38">        configuration.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;, &quot;PATCH&quot;));</span>
-<span class="fc" id="L39">        configuration.setAllowedHeaders(List.of(&quot;*&quot;));</span>
-<span class="fc" id="L40">        configuration.setAllowCredentials(true);</span>
+<span class="nc" id="L45">        CorsConfiguration configuration = new CorsConfiguration();</span>
+<span class="nc" id="L46">        configuration.setAllowedOriginPatterns(List.of(&quot;*&quot;));</span>
+<span class="nc" id="L47">        configuration.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;, &quot;PATCH&quot;));</span>
+<span class="nc" id="L48">        configuration.setAllowedHeaders(List.of(&quot;*&quot;));</span>
+<span class="nc" id="L49">        configuration.setAllowCredentials(true);</span>
 
-<span class="fc" id="L42">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
-<span class="fc" id="L43">        source.registerCorsConfiguration(&quot;/**&quot;, configuration);</span>
-<span class="fc" id="L44">        return source;</span>
+<span class="nc" id="L51">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="nc" id="L52">        source.registerCorsConfiguration(&quot;/**&quot;, configuration);</span>
+<span class="nc" id="L53">        return source;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

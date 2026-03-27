@@ -1,36 +1,38 @@
 package com.smartcourier.policy.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcourier.policy.dto.PolicyRequest;
 import com.smartcourier.policy.dto.PolicyResponse;
 import com.smartcourier.policy.service.PolicyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class PolicyControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private PolicyService policyService;
 
-    @InjectMocks
-    private PolicyController policyController;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private PolicyResponse testResponse;
     private PolicyRequest testRequest;
@@ -40,49 +42,69 @@ public class PolicyControllerTest {
         testResponse = PolicyResponse.builder()
                 .id(1L)
                 .name("Test Policy")
-                .description("Test Description")
-                .type("GENERAL")
+                .description("A comprehensive test policy description") // Fixed: 10+ chars
                 .basePremium(BigDecimal.valueOf(500))
+                .type("HEALTH") // Fixed: must be HEALTH|LIFE|VEHICLE|PROPERTY|OTHER
+                .status("ACTIVE")
                 .build();
 
         testRequest = new PolicyRequest();
         testRequest.setName("Test Policy");
-        testRequest.setDescription("Test Description");
-        testRequest.setType("GENERAL");
+        testRequest.setDescription("A comprehensive test policy description"); // Fixed: 10+ chars
         testRequest.setBasePremium(BigDecimal.valueOf(500));
+        testRequest.setType("HEALTH"); // Fixed: must be HEALTH|LIFE|VEHICLE|PROPERTY|OTHER
     }
 
     @Test
-    void createPolicy_ShouldReturnCreatedResponse() {
-        when(policyService.createPolicy(any(PolicyRequest.class))).thenReturn(testResponse);
-
-        ResponseEntity<PolicyResponse> response = policyController.createPolicy(testRequest);
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(testResponse.getName(), response.getBody().getName());
-    }
-
-    @Test
-    void getPolicies_ShouldReturnListOfPolicies() {
+    void getPolicies_ShouldReturnList() throws Exception {
         when(policyService.getPolicies()).thenReturn(List.of(testResponse));
 
-        ResponseEntity<List<PolicyResponse>> response =
-                policyController.getPolicies();
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().size());
+        mockMvc.perform(get("/api/v1/policies")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Test Policy"));
     }
 
     @Test
-    void purchasePolicy_ShouldReturnOk() {
-        when(policyService.purchasePolicy(1L)).thenReturn("Success");
+    void createPolicy_ShouldReturnCreated() throws Exception {
+        when(policyService.createPolicy(any(PolicyRequest.class))).thenReturn(testResponse);
 
-        ResponseEntity<String> response = policyController.purchasePolicy(1L);
+        mockMvc.perform(post("/api/v1/policies")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testRequest)))
+                .andExpect(status().isCreated());
+    }
 
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Success", response.getBody());
+    @Test
+    void getPolicyById_ShouldReturnPolicy() throws Exception {
+        when(policyService.getPolicyById(1L)).thenReturn(testResponse);
+
+        mockMvc.perform(get("/api/v1/policies/1")
+                        .header("X-Username", "user")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Test Policy"));
+    }
+
+    @Test
+    void purchasePolicy_ShouldReturnSuccess() throws Exception {
+        when(policyService.purchasePolicy(eq(1L), anyString())).thenReturn("Saga Initiated");
+
+        mockMvc.perform(post("/api/v1/policies/1/purchase")
+                        .header("X-Username", "user1")
+                        .header("X-Role", "USER"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Saga Initiated"));
+    }
+
+    @Test
+    void deletePolicy_ShouldReturnNoContent() throws Exception {
+        mockMvc.perform(delete("/api/v1/policies/1")
+                        .header("X-Username", "admin")
+                        .header("X-Role", "ADMIN"))
+                .andExpect(status().isNoContent());
     }
 }
