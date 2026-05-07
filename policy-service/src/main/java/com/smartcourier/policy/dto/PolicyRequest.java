@@ -39,4 +39,12 @@ public class PolicyRequest implements Serializable {
     @Future(message = "Expiry date must be a future date")
     @Schema(description = "Policy expiry date (must be in the future)", example = "2027-12-31T00:00:00")
     private LocalDateTime expiryDate;
+
+    @Min(value = 1, message = "Duration must be at least 1 month")
+    @Schema(description = "Policy duration in months", example = "180")
+    private Integer durationMonths;
+
+    @DecimalMin(value = "0.0", inclusive = false, message = "Coverage amount must be greater than zero")
+    @Schema(description = "Total coverage amount", example = "400000.00")
+    private BigDecimal coverageAmount;
 }

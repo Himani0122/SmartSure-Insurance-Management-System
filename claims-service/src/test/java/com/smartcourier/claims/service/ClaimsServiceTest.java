@@ -95,9 +95,10 @@ public class ClaimsServiceTest {
     void updateClaimStatus_WhenExists_ShouldSave() {
         when(claimRepository.findById(1L)).thenReturn(Optional.of(testClaim));
 
-        claimsService.updateClaimStatus(1L, "APPROVED");
+        claimsService.updateClaimStatus(1L, "APPROVED", "Approved by Test");
 
         assertEquals("APPROVED", testClaim.getStatus());
+        assertEquals("Approved by Test", testClaim.getAdminComments());
         verify(claimRepository, times(1)).findById(1L);
         verify(claimRepository, times(1)).save(testClaim);
     }

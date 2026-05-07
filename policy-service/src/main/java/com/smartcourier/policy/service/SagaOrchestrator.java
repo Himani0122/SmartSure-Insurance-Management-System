@@ -5,11 +5,11 @@ import com.smartcourier.policy.entity.PolicyPurchaseSaga;
 import com.smartcourier.policy.messaging.SagaEventProducer;
 import com.smartcourier.policy.repository.PolicyPurchaseSagaRepository;
 import com.smartcourier.policy.repository.PolicyRepository;
+import com.smartcourier.policy.entity.Policy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -20,17 +20,21 @@ public class SagaOrchestrator {
     private final PolicyPurchaseSagaRepository sagaRepository;
     private final PolicyRepository policyRepository;
     private final SagaEventProducer sagaEventProducer;
+    private final com.smartcourier.policy.client.AuthClient authClient;
 
     @Transactional
     public PolicyPurchaseSaga startPurchaseSaga(String userId, Long policyId) {
         // Verify policy exists
-        policyRepository.findById(policyId)
+        Policy policy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new RuntimeException("Policy not found with id: " + policyId));
+
+        java.math.BigDecimal amount = policy.getBasePremium().multiply(java.math.BigDecimal.valueOf(1.05));
 
         // Create saga record
         PolicyPurchaseSaga saga = PolicyPurchaseSaga.builder()
                 .userId(userId)
                 .policyId(policyId)
+                .amount(amount)
                 .status("INITIATED")
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -44,6 +48,7 @@ public class SagaOrchestrator {
                 .eventType("PURCHASE_REQUEST")
                 .policyId(policyId)
                 .userId(userId)
+                .amount(amount)
                 .status("INITIATED")
                 .build();
 
@@ -65,15 +70,16 @@ public class SagaOrchestrator {
                 saga.setUpdatedAt(LocalDateTime.now());
                 sagaRepository.save(saga);
 
-                // Next step: simulate payment confirmation
+                // Next step: Delegate to Payment Service
                 SagaEvent paymentEvent = SagaEvent.builder()
                         .sagaId(saga.getId())
-                        .eventType("PAYMENT_CONFIRM")
+                        .eventType("PAYMENT_REQUEST")
                         .policyId(saga.getPolicyId())
                         .userId(saga.getUserId())
+                        .amount(saga.getAmount())
                         .status("POLICY_RESERVED")
                         .build();
-                sagaEventProducer.sendPurchaseResponse(paymentEvent);
+                sagaEventProducer.sendPurchaseRequest(paymentEvent);
             }
             case "PAYMENT_CONFIRM" -> {
                 saga.setStatus("PAYMENT_COMPLETED");
@@ -95,6 +101,30 @@ public class SagaOrchestrator {
                 saga.setUpdatedAt(LocalDateTime.now());
                 sagaRepository.save(saga);
                 log.info("Saga completed successfully: sagaId={}", saga.getId());
+
+                // Send purchase confirmation email
+                try {
+                    com.smartcourier.policy.dto.external.UserResponse user = authClient.getUserByUsername(saga.getUserId());
+                    Policy policy = policyRepository.findById(saga.getPolicyId()).orElse(null);
+                    if (user != null && policy != null) {
+                        String body = "Hello " + user.getName() + ",\n\n" +
+                                "Congratulations! Your purchase of the policy \"" + policy.getName() + "\" has been successfully completed.\n" +
+                                "Policy ID: " + policy.getId() + "\n" +
+                                "Type: " + policy.getType() + "\n" +
+                                "Expiry Date: " + policy.getExpiryDate() + "\n\n" +
+                                "Thank you for choosing SmartSure!";
+                        
+                        authClient.sendNotification(com.smartcourier.policy.dto.external.NotificationRequest.builder()
+                                .email(user.getEmail())
+                                .username(user.getUsername())
+                                .subject("SmartSure - Policy Purchase Confirmation")
+                                .message(body)
+                                .build());
+                        log.info("Purchase confirmation email sent to: {}", user.getEmail());
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send purchase confirmation email for saga {}: {}", saga.getId(), e.getMessage());
+                }
             }
             default -> log.warn("Unknown saga event type: {}", event.getEventType());
         }

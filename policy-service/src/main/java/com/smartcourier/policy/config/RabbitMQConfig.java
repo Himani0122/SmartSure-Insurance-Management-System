@@ -3,6 +3,7 @@ package com.smartcourier.policy.config;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,17 +41,17 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding requestBinding(Queue purchaseRequestQueue, TopicExchange sagaExchange) {
+    public Binding requestBinding(@Qualifier("purchaseRequestQueue") Queue purchaseRequestQueue, TopicExchange sagaExchange) {
         return BindingBuilder.bind(purchaseRequestQueue).to(sagaExchange).with(ROUTING_KEY_REQUEST);
     }
 
     @Bean
-    public Binding responseBinding(Queue purchaseResponseQueue, TopicExchange sagaExchange) {
+    public Binding responseBinding(@Qualifier("purchaseResponseQueue") Queue purchaseResponseQueue, TopicExchange sagaExchange) {
         return BindingBuilder.bind(purchaseResponseQueue).to(sagaExchange).with(ROUTING_KEY_RESPONSE);
     }
 
     @Bean
-    public Binding compensateBinding(Queue purchaseCompensateQueue, TopicExchange sagaExchange) {
+    public Binding compensateBinding(@Qualifier("purchaseCompensateQueue") Queue purchaseCompensateQueue, TopicExchange sagaExchange) {
         return BindingBuilder.bind(purchaseCompensateQueue).to(sagaExchange).with(ROUTING_KEY_COMPENSATE);
     }
 

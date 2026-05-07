@@ -3,4 +3,4 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY target/auth-service.jar app.jar
 EXPOSE 8083
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]

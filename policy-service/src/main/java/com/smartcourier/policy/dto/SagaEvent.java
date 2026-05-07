@@ -16,4 +16,5 @@ public class SagaEvent {
     private String userId;
     private String status;
     private String failureReason;
+    private java.math.BigDecimal amount;
 }

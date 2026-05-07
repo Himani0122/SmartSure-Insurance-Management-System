@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "auth-service", path = "/api/v1/auth")
+@FeignClient(name = "auth-service", path = "/api/v1/auth", url = "${AUTH_SERVICE_URL:http://auth-service:8083}")
 public interface AuthClient {
     @GetMapping("/all-users")
     List<Map<String, Object>> getAllUsers();

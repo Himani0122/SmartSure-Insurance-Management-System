@@ -23,6 +23,7 @@
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <sonar.projectKey>smartsure-policy-service</sonar.projectKey>
         <sonar.projectName>SmartSure - policy-service</sonar.projectName>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -79,6 +80,12 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+
+        <!-- OPENFEIGN -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
         <!-- LOMBOK -->

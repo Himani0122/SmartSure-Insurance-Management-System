@@ -174,4 +174,18 @@ public class PolicyController {
     public ResponseEntity<String> cancelPolicy(@PathVariable Long id, @RequestHeader("X-Username") String username) {
         return ResponseEntity.ok(policyService.cancelPolicy(id, username));
     }
+
+    @Operation(summary = "Pay monthly premium", description = "Increments the paid months for a purchased policy.")
+    @PostMapping("/{id}/pay-premium")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> payPremium(@PathVariable Long id, @RequestHeader("X-Username") String username) {
+        return ResponseEntity.ok(policyService.payPremium(id, username));
+    }
+
+    @Operation(summary = "Get payment status", description = "Returns the number of months paid for a policy.")
+    @GetMapping("/{id}/payment-status")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Integer> getPaymentStatus(@PathVariable Long id, @RequestHeader("X-Username") String username) {
+        return ResponseEntity.ok(policyService.getPaidMonths(id, username));
+    }
 }

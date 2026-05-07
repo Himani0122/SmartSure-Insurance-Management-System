@@ -25,4 +25,14 @@ public class UpdateProfileRequest {
     )
     @Schema(description = "New valid email address", example = "john_new@gmail.com", requiredMode = Schema.RequiredMode.REQUIRED)
     private String email;
+
+    @NotBlank(message = "Name cannot be blank")
+    @Schema(description = "Full name", example = "John Doe", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String name;
+
+    @Schema(description = "Contact phone number", example = "+1234567890")
+    private String phone;
+
+    @Schema(description = "Home or billing address", example = "123 Main St, Anytown")
+    private String address;
 }

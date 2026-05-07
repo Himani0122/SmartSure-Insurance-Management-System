@@ -2,6 +2,8 @@ package com.smartcourier.auth.controller;
 
 import com.smartcourier.auth.dto.*;
 import com.smartcourier.auth.service.AuthService;
+import com.smartcourier.auth.service.EmailService;
+import com.smartcourier.auth.service.OtpService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -20,11 +22,77 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final OtpService otpService;
+    private final EmailService emailService;
+    private final com.smartcourier.auth.repository.NotificationRepository notificationRepository;
 
-    @Operation(summary = "Register a new user", description = "Creates a new user account. Role defaults to USER if not specified.")
+    @Operation(summary = "Send OTP to Email", description = "Generates and emails a 6-digit OTP for registration verification. Checks if email is already taken.")
+    @PostMapping("/send-otp")
+    public ResponseEntity<String> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+        if (authService.isEmailRegistered(request.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email is already registered");
+        }
+        String otp = otpService.generateOtp(request.getEmail());
+        emailService.sendOtpEmail(request.getEmail(), otp);
+        return ResponseEntity.ok("OTP sent to email");
+    }
+
+    @Operation(summary = "Forgot Password - Send OTP", description = "Sends a 6-digit OTP to a registered email address for password recovery.")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok("Password reset OTP sent to your email.");
+    }
+
+    @Operation(summary = "Reset Password", description = "Resets user password using the OTP received via email.")
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok("Password reset successfully.");
+    }
+
+    @Operation(summary = "Send Email Notification", description = "Sends a generic email notification to a user. Used by other microservices.")
+    @PostMapping("/send-notification")
+    public ResponseEntity<String> sendNotification(@Valid @RequestBody NotificationRequest request) {
+        emailService.sendNotification(request.getEmail(), request.getUsername(), request.getSubject(), request.getMessage());
+        return ResponseEntity.ok("Notification sent");
+    }
+
+    @Operation(summary = "Internal: Get user by username", description = "Internal endpoint for other services.")
+    @GetMapping("/internal/user/{username}")
+    public ResponseEntity<UserResponse> getInternalUser(@PathVariable String username) {
+        return ResponseEntity.ok(authService.getUserByUsername(username));
+    }
+
+    @Operation(summary = "Internal: Send Notification", description = "Internal endpoint for other services.")
+    @PostMapping("/internal/send-notification")
+    public ResponseEntity<String> sendInternalNotification(@Valid @RequestBody NotificationRequest request) {
+        emailService.sendNotification(request.getEmail(), request.getUsername(), request.getSubject(), request.getMessage());
+        return ResponseEntity.ok("Notification sent");
+    }
+
+    @Operation(summary = "Get user notifications", description = "Returns a list of in-app notifications for the logged-in user.")
+    @GetMapping("/notifications")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<java.util.List<com.smartcourier.auth.entity.Notification>> getNotifications(@RequestHeader("X-Username") String username) {
+        return ResponseEntity.ok(notificationRepository.findByUsernameOrderByCreatedAtDesc(username));
+    }
+
+    @Operation(summary = "Mark notification as read", description = "Marks a specific notification as read.")
+    @PutMapping("/notifications/{id}/read")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
+        notificationRepository.findById(id).ifPresent(n -> {
+            n.setRead(true);
+            notificationRepository.save(n);
+        });
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Register a new user", description = "Creates a new user account. Role defaults to USER if not specified. Requires OTP.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "User registered successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error or username/email already taken")
+        @ApiResponse(responseCode = "400", description = "Validation error, bad OTP, or username/email already taken")
     })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {

@@ -36,4 +36,10 @@ public class Policy {
 
     @Column(nullable = false, columnDefinition = "timestamp default current_timestamp")
     private LocalDateTime expiryDate;
+
+    @Column(name = "duration_months")
+    private Integer durationMonths;
+
+    @Column(name = "coverage_amount")
+    private BigDecimal coverageAmount;
 }

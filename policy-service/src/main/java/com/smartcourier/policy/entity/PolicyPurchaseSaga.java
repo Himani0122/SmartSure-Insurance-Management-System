@@ -35,4 +35,8 @@ public class PolicyPurchaseSaga {
     private LocalDateTime updatedAt;
 
     private String failureReason;
+    private java.math.BigDecimal amount;
+    
+    @Column(columnDefinition = "int default 1")
+    private Integer paidMonths;
 }

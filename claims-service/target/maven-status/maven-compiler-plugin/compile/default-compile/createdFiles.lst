@@ -1,5 +1,7 @@
+com\smartcourier\claims\dto\external\NotificationRequest.class
 com\smartcourier\claims\config\OpenApiConfig.class
 com\smartcourier\claims\dto\ClaimDocumentResponse.class
+com\smartcourier\claims\dto\external\UserResponse$UserResponseBuilder.class
 com\smartcourier\claims\dto\ClaimInitiateRequest$ClaimInitiateRequestBuilder.class
 com\smartcourier\claims\config\RoleHeaderFilter.class
 com\smartcourier\claims\dto\ClaimResponse$ClaimResponseBuilder.class
@@ -7,6 +9,7 @@ com\smartcourier\claims\config\RabbitMQConfig.class
 com\smartcourier\claims\exception\GlobalExceptionHandler.class
 com\smartcourier\claims\controller\ClaimsController.class
 com\smartcourier\claims\ClaimsServiceApplication.class
+com\smartcourier\claims\dto\external\UserResponse.class
 com\smartcourier\claims\service\OutboxService.class
 com\smartcourier\claims\service\ClaimsService.class
 com\smartcourier\claims\dto\ClaimResponse.class
@@ -18,7 +21,9 @@ com\smartcourier\claims\messaging\ClaimMessageConsumer.class
 com\smartcourier\claims\entity\OutboxEvent.class
 com\smartcourier\claims\entity\OutboxEvent$OutboxEventBuilder.class
 com\smartcourier\claims\dto\ClaimInitiateRequest.class
+com\smartcourier\claims\dto\external\NotificationRequest$NotificationRequestBuilder.class
 com\smartcourier\claims\repository\OutboxRepository.class
+com\smartcourier\claims\dto\ClaimReviewRequest.class
 com\smartcourier\claims\entity\ClaimDocument$ClaimDocumentBuilder.class
 com\smartcourier\claims\messaging\OutboxPoller.class
 com\smartcourier\claims\entity\Claim.class
@@ -26,3 +31,4 @@ com\smartcourier\claims\dto\ClaimStatusUpdateEvent.class
 com\smartcourier\claims\repository\ClaimDocumentRepository.class
 com\smartcourier\claims\entity\Claim$ClaimBuilder.class
 com\smartcourier\claims\entity\ClaimDocument.class
+com\smartcourier\claims\client\AuthClient.class

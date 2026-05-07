@@ -23,4 +23,6 @@ public class PolicyResponse implements Serializable {
     private String type;
     private String status;
     private LocalDateTime expiryDate;
+    private Integer durationMonths;
+    private BigDecimal coverageAmount;
 }

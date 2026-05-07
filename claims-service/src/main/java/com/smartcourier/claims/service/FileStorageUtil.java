@@ -14,7 +14,9 @@ import java.util.UUID;
 @Component
 public class FileStorageUtil {
 
-    private final String UPLOAD_DIR = System.getProperty("java.io.tmpdir") + File.separator + "uploads";
+    private final String UPLOAD_DIR = System.getenv("UPLOAD_DIR") != null 
+            ? System.getenv("UPLOAD_DIR") 
+            : System.getProperty("java.io.tmpdir") + File.separator + "uploads";
 
     public FileStorageUtil() {
         File directory = new File(UPLOAD_DIR);
@@ -35,6 +37,20 @@ public class FileStorageUtil {
             return targetLocation.toString();
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file. Please try again!", ex);
+        }
+    }
+
+    public org.springframework.core.io.Resource loadFileAsResource(String filePath) {
+        try {
+            Path path = Paths.get(filePath);
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(path.toUri());
+            if (resource.exists()) {
+                return resource;
+            } else {
+                throw new RuntimeException("File not found: " + filePath);
+            }
+        } catch (java.net.MalformedURLException ex) {
+            throw new RuntimeException("File not found: " + filePath, ex);
         }
     }
 }

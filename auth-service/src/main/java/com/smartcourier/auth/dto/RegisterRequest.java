@@ -34,4 +34,18 @@ public class RegisterRequest {
     @Pattern(regexp = "USER|ADMIN", message = "Role must be either USER or ADMIN")
     @Schema(description = "User role (defaults to USER if not provided)", example = "USER", allowableValues = {"USER", "ADMIN"})
     private String role;
+
+    @NotBlank(message = "Name cannot be blank")
+    @Schema(description = "Full name", example = "John Doe", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String name;
+
+    @Schema(description = "Contact phone number", example = "+1234567890")
+    private String phone;
+
+    @Schema(description = "Home or billing address", example = "123 Main St, Anytown")
+    private String address;
+
+    @NotBlank(message = "OTP is required")
+    @Schema(description = "6-digit OTP sent to email", example = "123456", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String otp;
 }

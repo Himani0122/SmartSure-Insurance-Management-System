@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ClaimStatusUpdateEvent {
     private Long claimId;
     private String status;
+    private String comments;
 }

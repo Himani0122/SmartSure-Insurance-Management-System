@@ -4,6 +4,7 @@ import com.smartcourier.auth.dto.*;
 import com.smartcourier.auth.entity.User;
 import com.smartcourier.auth.repository.UserRepository;
 import com.smartcourier.auth.util.JwtUtil;
+import com.smartcourier.auth.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final OtpService otpService;
+    private final EmailService emailService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -32,16 +35,30 @@ public class AuthService {
             throw new RuntimeException("Email is already registered");
         }
 
+        if (request.getUsername().equalsIgnoreCase("admin") || 
+            request.getEmail().equalsIgnoreCase("admin@smartsure.com")) {
+            throw new RuntimeException("This account is reserved for system administration.");
+        }
+
+        if (!otpService.verifyOtp(request.getEmail(), request.getOtp())) {
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+
         String refreshToken = UUID.randomUUID().toString();
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole() != null ? request.getRole() : "USER")
+                .name(request.getName())
+                .phone(request.getPhone())
+                .address(request.getAddress())
+                .role("USER")
                 .refreshToken(refreshToken)
                 .build();
 
         userRepository.save(user);
+
+        emailService.sendWelcomeEmail(user.getEmail(), user.getName());
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
         return new AuthResponse(token, refreshToken);
@@ -86,7 +103,13 @@ public class AuthService {
         
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
+        user.setName(request.getName());
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
         userRepository.save(user);
+        
+        emailService.sendNotification(user.getEmail(), user.getUsername(), "SmartSure - Profile Updated", 
+                "Hello " + user.getName() + ",\n\nYour profile has been successfully updated.");
     }
 
     public void changePassword(String currentUsername, ChangePasswordRequest request) {
@@ -99,6 +122,9 @@ public class AuthService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        emailService.sendNotification(user.getEmail(), user.getUsername(), "SmartSure - Security Alert: Password Changed", 
+                "Hello " + user.getName() + ",\n\nYour password has been successfully changed. If you did not perform this action, please contact support immediately.");
     }
 
     public void deleteUser(Long id) {
@@ -111,7 +137,11 @@ public class AuthService {
                         .id(user.getId())
                         .username(user.getUsername())
                         .email(user.getEmail())
+                        .name(user.getName())
+                        .phone(user.getPhone())
+                        .address(user.getAddress())
                         .role(user.getRole())
+                        .blocked(user.isBlocked())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -144,11 +174,41 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    public boolean isEmailRegistered(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
+
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email is not registered"));
+        
+        String otp = otpService.generateOtp(request.getEmail());
+        emailService.sendOtpEmail(request.getEmail(), otp);
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email is not registered"));
+        
+        if (!otpService.verifyOtp(request.getEmail(), request.getOtp())) {
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        emailService.sendNotification(user.getEmail(), user.getUsername(), "SmartSure - Password Reset Successful", 
+                "Hello " + user.getName() + ",\n\nYour password has been successfully reset. If you did not perform this action, please contact support immediately.");
+    }
+
     private UserResponse mapToResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .name(user.getName())
+                .phone(user.getPhone())
+                .address(user.getAddress())
                 .role(user.getRole())
                 .blocked(user.isBlocked())
                 .build();

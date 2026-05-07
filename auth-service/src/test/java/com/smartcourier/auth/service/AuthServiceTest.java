@@ -9,6 +9,7 @@ import com.smartcourier.auth.dto.ChangePasswordRequest;
 import com.smartcourier.auth.entity.User;
 import com.smartcourier.auth.repository.UserRepository;
 import com.smartcourier.auth.util.JwtUtil;
+import com.smartcourier.auth.service.OtpService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,9 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private OtpService otpService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -58,6 +62,8 @@ class AuthServiceTest {
         registerRequest.setEmail("test@test.com");
         registerRequest.setPassword("password");
         registerRequest.setRole("USER");
+        registerRequest.setOtp("123456");
+        registerRequest.setName("Test Name");
 
         loginRequest = new LoginRequest();
         loginRequest.setUsername("testuser");
@@ -69,6 +75,7 @@ class AuthServiceTest {
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-password");
+        when(otpService.verifyOtp(anyString(), anyString())).thenReturn(true);
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtil.generateToken(anyString(), anyString())).thenReturn("mock-token");
 
@@ -143,6 +150,7 @@ class AuthServiceTest {
         com.smartcourier.auth.dto.UpdateProfileRequest request = new com.smartcourier.auth.dto.UpdateProfileRequest();
         request.setUsername("newuser");
         request.setEmail("new@test.com");
+        request.setName("New Name");
 
         authService.updateProfile("testuser", request);
 

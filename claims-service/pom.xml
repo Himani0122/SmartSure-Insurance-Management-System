@@ -19,7 +19,8 @@
 		<spring-cloud.version>2023.0.1</spring-cloud.version>
 		<sonar.projectKey>smartsure-claims-service</sonar.projectKey>
 		<sonar.projectName>SmartSure - claims-service</sonar.projectName>
-	</properties>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
 
 	<dependencies>
 		<dependency>

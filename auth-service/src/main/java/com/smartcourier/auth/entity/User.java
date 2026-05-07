@@ -23,6 +23,15 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column
+    private String name;
+
+    @Column
+    private String phone;
+
+    @Column
+    private String address;
+
     @Column(nullable = false)
     private String password;
 

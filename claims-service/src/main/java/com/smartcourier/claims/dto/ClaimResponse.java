@@ -21,5 +21,7 @@ public class ClaimResponse implements Serializable {
     private String status;
     private String documentPath;
     private String idempotencyKey;
+    private String adminComments;
+    private java.math.BigDecimal claimAmount;
     private List<ClaimDocumentResponse> documents;
 }

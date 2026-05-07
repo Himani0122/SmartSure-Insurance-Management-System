@@ -117,6 +117,7 @@ services:
       SONAR_JDBC_USERNAME: sonar
       SONAR_JDBC_PASSWORD: sonar
       SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+      SONAR_FORCEAUTHENTICATION: "false"
     deploy:
       resources:
         limits:
@@ -161,6 +162,12 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
   auth-service:
     build: 
@@ -181,7 +188,7 @@ services:
       config-server:
         condition: service_healthy
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   policy-service:
     build: 
@@ -196,10 +203,13 @@ services:
       - ZIPKIN_HOST=zipkin
       - EUREKA_HOST=service-registry
       - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
+      - AUTH_SERVICE_URL=http://auth-service:8083
     depends_on:
       postgres:
         condition: service_healthy
       service-registry:
+        condition: service_started
+      auth-service:
         condition: service_started
 
   claims-service:
@@ -215,6 +225,33 @@ services:
       - ZIPKIN_HOST=zipkin
       - EUREKA_HOST=service-registry
       - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
+      - UPLOAD_DIR=/app/uploads
+      - AUTH_SERVICE_URL=http://auth-service:8083
+    volumes:
+      - claims-uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      auth-service:
+        condition: service_started
+
+  payment-service:
+    build: 
+      context: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8088:8088"
+    environment:
+      - DB_HOST=postgres
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - ZIPKIN_HOST=zipkin
+      - EUREKA_HOST=service-registry
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-rzp_test_placeholder}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-secret_placeholder}
     depends_on:
       postgres:
         condition: service_healthy
@@ -234,10 +271,13 @@ services:
       - ZIPKIN_HOST=zipkin
       - EUREKA_HOST=service-registry
       - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
+      - AUTH_SERVICE_URL=http://auth-service:8083
     depends_on:
       config-server:
         condition: service_healthy
       service-registry:
+        condition: service_started
+      auth-service:
         condition: service_started
 
   api-gateway:
@@ -255,6 +295,16 @@ services:
       - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
     depends_on:
       service-registry:
+        condition: service_healthy
+
+  frontend:
+    build: 
+      context: ./user-management-ui
+    container_name: frontend-ui
+    ports:
+      - "80:80"
+    depends_on:
+      api-gateway:
         condition: service_started
 
 volumes:
@@ -266,3 +316,4 @@ volumes:
   sonarqube-extensions:
   sonarqube-logs:
   sonarqube-db-data:
+  claims-uploads:

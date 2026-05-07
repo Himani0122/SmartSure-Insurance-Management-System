@@ -34,4 +34,9 @@ public class ClaimInitiateRequest implements Serializable {
 
     @Schema(description = "Optional document path for pre-uploaded files", example = "/uploads/docs/claim_doc.pdf")
     private String documentPath;
+
+    @NotNull(message = "Claim amount is required")
+    @Positive(message = "Claim amount must be positive")
+    @Schema(description = "Amount requested in the claim", example = "5000.00")
+    private java.math.BigDecimal claimAmount;
 }

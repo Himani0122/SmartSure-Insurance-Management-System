@@ -22,6 +22,9 @@
         <java.version>17</java.version>
         <!-- ✅ SPRING CLOUD VERSION -->
         <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <sonar.projectKey>smartsure-api-gateway</sonar.projectKey>
+        <sonar.projectName>SmartSure - api-gateway</sonar.projectName>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>

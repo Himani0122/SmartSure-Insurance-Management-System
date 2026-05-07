@@ -11,4 +11,5 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
     List<Policy> findByType(String type);
     List<Policy> findByStatus(String status);
     List<Policy> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String name, String description);
+    List<Policy> findByStatusAndExpiryDateBefore(String status, java.time.LocalDateTime date);
 }

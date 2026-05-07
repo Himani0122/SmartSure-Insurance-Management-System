@@ -26,10 +26,11 @@ class ClaimMessageConsumerTest {
         ClaimStatusUpdateEvent event = new ClaimStatusUpdateEvent();
         event.setClaimId(1L);
         event.setStatus("APPROVED");
+        event.setComments("Test");
 
         consumer.handleStatusUpdate(event);
 
-        verify(claimsService, times(1)).updateClaimStatus(1L, "APPROVED");
+        verify(claimsService, times(1)).updateClaimStatus(1L, "APPROVED", "Test");
     }
 
     @Test
@@ -38,11 +39,11 @@ class ClaimMessageConsumerTest {
         event.setClaimId(1L);
         event.setStatus("APPROVED");
 
-        doThrow(new RuntimeException("Error")).when(claimsService).updateClaimStatus(anyLong(), anyString());
+        doThrow(new RuntimeException("Error")).when(claimsService).updateClaimStatus(anyLong(), anyString(), any());
 
         // Should just log and not throw
         consumer.handleStatusUpdate(event);
 
-        verify(claimsService, times(1)).updateClaimStatus(1L, "APPROVED");
+        verify(claimsService, times(1)).updateClaimStatus(1L, "APPROVED", null);
     }
 }

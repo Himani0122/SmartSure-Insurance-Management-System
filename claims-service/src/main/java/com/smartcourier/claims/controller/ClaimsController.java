@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.smartcourier.claims.dto.ClaimReviewRequest;
 import java.util.List;
 
 @RestController
@@ -37,7 +38,7 @@ public class ClaimsController {
         return ResponseEntity.ok(claimsService.getAllClaims());
     }
 
-    @Operation(summary = "Get pending claims (Admin only)", description = "Returns all claims currently in PENDING status awaiting admin review.")
+    @Operation(summary = "Get pending claims (Admin only)", description = "Returns all claims currently in UNDER_REVIEW status awaiting admin review.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Pending claims returned"),
         @ApiResponse(responseCode = "403", description = "Access denied — ADMIN role required")
@@ -152,7 +153,27 @@ public class ClaimsController {
         return ResponseEntity.ok(claimsService.trackClaim(id).getDocuments());
     }
 
-    @Operation(summary = "Get claims by status", description = "Filters and returns all claims with the specified status (e.g. PENDING, SUBMITTED, APPROVED, REJECTED, CANCELLED).")
+    @Operation(summary = "Download a document", description = "Downloads the specific document file attached to a claim.")
+    @GetMapping("/{id}/documents/{docId}/download")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadDocument(
+            @PathVariable Long id,
+            @PathVariable Long docId) {
+        org.springframework.core.io.Resource resource = claimsService.downloadDocument(id, docId);
+        String contentType = "application/octet-stream";
+        try {
+            contentType = java.nio.file.Files.probeContentType(java.nio.file.Paths.get(resource.getFile().getAbsolutePath()));
+        } catch (java.io.IOException ex) {
+            // fallback
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
+    }
+
+    @Operation(summary = "Get claims by status", description = "Filters and returns all claims with the specified status (e.g. UNDER_REVIEW, SUBMITTED, APPROVED, REJECTED, CANCELLED).")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Filtered claims returned"),
         @ApiResponse(responseCode = "403", description = "Access denied")
@@ -161,5 +182,15 @@ public class ClaimsController {
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<ClaimResponse>> getClaimsByStatus(@PathVariable String status) {
         return ResponseEntity.ok(claimsService.getClaimsByStatus(status));
+    }
+
+    @Operation(summary = "Review a claim (Admin only)", description = "Synchronously updates claim status and adds admin comments.")
+    @PutMapping("/{id}/review")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClaimResponse> reviewClaim(
+            @PathVariable Long id,
+            @Valid @RequestBody ClaimReviewRequest request) {
+        claimsService.updateClaimStatus(id, request.getStatus(), request.getComments());
+        return ResponseEntity.ok(claimsService.trackClaim(id));
     }
 }

@@ -28,13 +28,23 @@ public class AdminService {
     @CircuitBreaker(name = "claimsService", fallbackMethod = "reviewClaimFallback")
     @Retry(name = "claimsService", fallbackMethod = "reviewClaimFallback")
     public String reviewClaim(Long claimId, AdminReviewRequest request) {
-        log.info("Admin tracking claim {}", claimId);
-        ClaimResponse claim = claimsClient.getClaimById(claimId);
+        log.info("Admin reviewing claim {} with decision: {}", claimId, request.getStatus());
         
-        log.info("Claim found. Issuing update via RabbitMQ for status: {}", request.getStatus());
-        claimEventProducer.sendClaimStatusUpdate(claim.getId(), request.getStatus());
+        // 1. Synchronous update via Feign
+        log.info("Performing synchronous update via Feign for claimId: {}", claimId);
+        claimsClient.reviewClaim(claimId, request);
+
+        // 2. Asynchronous update via RabbitMQ (for downstream consumers if any)
+        log.info("Issuing additional update via RabbitMQ for claimId: {}, status: {}", claimId, request.getStatus());
+        claimEventProducer.sendClaimStatusUpdate(claimId, request.getStatus());
         
-        return "Review submitted successfully. Claim status update initiated via queue.";
+        return "Claim #" + claimId + " has been successfully " + request.getStatus().toLowerCase() + ".";
+    }
+
+    public String startReview(Long claimId) {
+        log.info("Admin starting review for claim {}", claimId);
+        claimEventProducer.sendClaimStatusUpdate(claimId, "UNDER_REVIEW");
+        return "Claim is now UNDER_REVIEW.";
     }
 
     public String reviewClaimFallback(Long claimId, AdminReviewRequest request, Throwable ex) {

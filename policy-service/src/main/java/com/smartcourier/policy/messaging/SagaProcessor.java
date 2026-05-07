@@ -5,10 +5,19 @@ import com.smartcourier.policy.dto.SagaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.stereotype.Component;
 
+/**
+ * DISABLED: SagaProcessor is no longer active.
+ *
+ * Previously this class simulated the Payment Service by auto-confirming
+ * every purchase request. Now that the real Payment Service (PaymentSagaConsumer)
+ * listens on the same queue ("saga.purchase.request.queue"), this class is
+ * disabled to prevent message stealing / race conditions.
+ *
+ * The Payment Service handles all purchase requests end-to-end.
+ */
 @Slf4j
-@Component
+// @Component  ← DISABLED: Payment Service now handles saga.purchase.request.queue
 @RequiredArgsConstructor
 public class SagaProcessor {
 
@@ -18,7 +27,6 @@ public class SagaProcessor {
     public void processPurchaseRequest(SagaEvent event) {
         log.info("SagaProcessor: Received purchase request for sagaId={}, policyId={}", event.getSagaId(), event.getPolicyId());
 
-        // Simulate successful policy reservation and forward to the response queue
         SagaEvent responseEvent = SagaEvent.builder()
                 .sagaId(event.getSagaId())
                 .eventType("POLICY_RESERVED")

@@ -33,8 +33,13 @@ public class Claim {
 
     private String documentPath;
 
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'PENDING'")
-    private String status; // e.g., PENDING, APPROVED, REJECTED
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'DRAFT'")
+    private String status; // e.g., DRAFT, UNDER_REVIEW, APPROVED, REJECTED
+
+    @Column(length = 500)
+    private String adminComments;
+
+    private java.math.BigDecimal claimAmount;
 
     @OneToMany(mappedBy = "claim", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

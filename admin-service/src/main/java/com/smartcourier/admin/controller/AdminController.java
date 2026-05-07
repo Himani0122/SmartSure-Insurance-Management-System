@@ -49,7 +49,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllClaims());
     }
 
-    @Operation(summary = "Get pending claims", description = "Returns all claims awaiting admin review in PENDING status.")
+    @Operation(summary = "Get pending claims", description = "Returns all claims awaiting admin review in UNDER_REVIEW status.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Pending claims returned"),
         @ApiResponse(responseCode = "403", description = "Access denied — ADMIN role required")

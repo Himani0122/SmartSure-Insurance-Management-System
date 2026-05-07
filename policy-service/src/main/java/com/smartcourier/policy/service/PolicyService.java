@@ -37,6 +37,8 @@ public class PolicyService {
                 .type(request.getType() != null ? request.getType() : "GENERAL")
                 .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .expiryDate(request.getExpiryDate() != null ? request.getExpiryDate() : LocalDateTime.now().plusYears(1))
+                .durationMonths(request.getDurationMonths())
+                .coverageAmount(request.getCoverageAmount())
                 .build();
         Policy saved = policyRepository.save(policy);
         return mapToResponse(saved);
@@ -64,6 +66,8 @@ public class PolicyService {
         policy.setType(request.getType());
         if (request.getStatus() != null) policy.setStatus(request.getStatus());
         if (request.getExpiryDate() != null) policy.setExpiryDate(request.getExpiryDate());
+        if (request.getDurationMonths() != null) policy.setDurationMonths(request.getDurationMonths());
+        if (request.getCoverageAmount() != null) policy.setCoverageAmount(request.getCoverageAmount());
         
         Policy updated = policyRepository.save(policy);
         return mapToResponse(updated);
@@ -93,7 +97,11 @@ public class PolicyService {
     }
 
     public List<PolicyResponse> getUserPurchasedPolicies(String username) {
-        List<PolicyPurchaseSaga> sagas = sagaRepository.findByUserIdAndStatus(username, "COMPLETED");
+        List<String> validStatuses = List.of("INITIATED", "POLICY_RESERVED", "PAYMENT_COMPLETED", "COMPLETED");
+        List<PolicyPurchaseSaga> sagas = sagaRepository.findAll().stream()
+                .filter(s -> s.getUserId().equals(username) && validStatuses.contains(s.getStatus()))
+                .collect(Collectors.toList());
+        
         return sagas.stream()
                 .map(saga -> policyRepository.findById(saga.getPolicyId()).orElse(null))
                 .filter(java.util.Objects::nonNull)
@@ -125,6 +133,28 @@ public class PolicyService {
         return "Policy purchase saga initiated. Saga ID: " + saga.getId() + ". Track status for updates.";
     }
 
+    @Transactional
+    public String payPremium(Long policyId, String username) {
+        PolicyPurchaseSaga saga = sagaRepository.findAll().stream()
+                .filter(s -> s.getUserId().equals(username) && s.getPolicyId().equals(policyId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Purchase not found for this policy"));
+        
+        saga.setPaidMonths((saga.getPaidMonths() == null ? 1 : saga.getPaidMonths()) + 1);
+        saga.setUpdatedAt(LocalDateTime.now());
+        sagaRepository.save(saga);
+        log.info("Premium paid for policyId={} by user={}. Total paid months: {}", policyId, username, saga.getPaidMonths());
+        return "Premium paid successfully. Total months paid: " + saga.getPaidMonths();
+    }
+
+    public Integer getPaidMonths(Long policyId, String username) {
+        return sagaRepository.findAll().stream()
+                .filter(s -> s.getUserId().equals(username) && s.getPolicyId().equals(policyId))
+                .findFirst()
+                .map(s -> s.getPaidMonths() == null ? 1 : s.getPaidMonths())
+                .orElse(0);
+    }
+
     private PolicyResponse mapToResponse(Policy policy) {
         return PolicyResponse.builder()
                 .id(policy.getId())
@@ -134,6 +164,8 @@ public class PolicyService {
                 .type(policy.getType())
                 .status(policy.getStatus())
                 .expiryDate(policy.getExpiryDate())
+                .durationMonths(policy.getDurationMonths())
+                .coverageAmount(policy.getCoverageAmount())
                 .build();
     }
 }

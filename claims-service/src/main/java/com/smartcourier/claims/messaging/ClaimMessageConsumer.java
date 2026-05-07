@@ -20,7 +20,7 @@ public class ClaimMessageConsumer {
                 event.getClaimId(), event.getStatus());
         
         try {
-            claimsService.updateClaimStatus(event.getClaimId(), event.getStatus());
+            claimsService.updateClaimStatus(event.getClaimId(), event.getStatus(), event.getComments());
             log.info("Successfully updated claim status in database for claimId={}", event.getClaimId());
         } catch (Exception e) {
             log.error("Failed to update claim status for claimId={}: {}", event.getClaimId(), e.getMessage());

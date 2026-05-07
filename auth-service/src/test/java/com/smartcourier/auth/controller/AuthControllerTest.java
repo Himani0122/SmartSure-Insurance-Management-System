@@ -72,7 +72,7 @@ public class AuthControllerTest {
 
     @Test
     void updateProfile_ShouldReturnOk() throws Exception {
-        UpdateProfileRequest request = new UpdateProfileRequest("newuser", "newuser@gmail.com");
+        UpdateProfileRequest request = new UpdateProfileRequest("newuser", "newuser@gmail.com", "New User", "1234", "123 Main");
         mockMvc.perform(put("/api/v1/auth/update-profile")
                         .header("X-Username", "testuser")
                         .header("X-Role", "USER")
