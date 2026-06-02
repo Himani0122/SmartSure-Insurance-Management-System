@@ -1,0 +1,41 @@
+# Maven build outputs
+**/target/
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+
+# Logs
+*.log
+**/logs/
+**/*.log
+
+# IDEs and Editors
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+bin/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node.js dependencies and builds
+**/node_modules/
+**/dist/
+**/build/
+.npm
+.eslintcache
+
+# OS-specific files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local configuration overrides
+docker-compose.override.yml

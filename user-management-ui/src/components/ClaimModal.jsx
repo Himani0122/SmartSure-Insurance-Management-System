@@ -1,6 +1,6 @@
 // React modal component for filing an insurance claim in the SmartSure application
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { X, FileText, Upload, CheckCircle, Info, Loader } from 'lucide-react';
 
 const ClaimModal = ({ isOpen, onClose, onSubmit, policies = [] }) => {
@@ -15,13 +15,25 @@ const ClaimModal = ({ isOpen, onClose, onSubmit, policies = [] }) => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Always reactive to policyId changes
+  const selectedPolicy = useMemo(
+    () => policies.find(p => String(p.id) === String(formData.policyId)),
+    [policies, formData.policyId]
+  );
+  const maxClaimAmount = selectedPolicy?.coverageAmount ?? null;
+
   const validate = () => {
     const errs = {};
     if (!formData.policyId) errs.policyId = 'Select a policy';
     if (!formData.description.trim() || formData.description.length < 10)
       errs.description = 'Description required (10+ characters)';
-    if (!formData.claimAmount || isNaN(parseFloat(formData.claimAmount)) || parseFloat(formData.claimAmount) <= 0)
-      errs.claimAmount = 'Valid claim amount required';
+
+    const amount = parseFloat(formData.claimAmount);
+    if (!formData.claimAmount || isNaN(amount) || amount <= 0)
+      errs.claimAmount = 'Valid claim amount required (must be > 0)';
+    else if (maxClaimAmount !== null && amount > maxClaimAmount)
+      errs.claimAmount = `Claim amount cannot exceed the policy coverage of ₹${Number(maxClaimAmount).toLocaleString()}`;
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -34,7 +46,7 @@ const ClaimModal = ({ isOpen, onClose, onSubmit, policies = [] }) => {
       await onSubmit({
         policyId: parseInt(formData.policyId),
         description: formData.description,
-        claimAmount: parseFloat(formData.claimAmount),
+        claimAmount: parseFloat(Number(formData.claimAmount).toFixed(2)),
         idempotencyKey: formData.idempotencyKey,
         file: file
       });
@@ -44,8 +56,33 @@ const ClaimModal = ({ isOpen, onClose, onSubmit, policies = [] }) => {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value } = e.target;
+
+    // When policy changes, clear claimAmount to force re-entry
+    if (name === 'policyId') {
+      setFormData({ ...formData, policyId: value, claimAmount: '' });
+      setErrors({ ...errors, policyId: '', claimAmount: '' });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
+
+    // Real-time validation for claimAmount
+    if (name === 'claimAmount') {
+      const amount = parseFloat(value);
+      const newErrors = { ...errors, claimAmount: '' };
+      if (value && !isNaN(amount)) {
+        if (amount <= 0) {
+          newErrors.claimAmount = 'Claim amount must be greater than 0';
+        } else if (maxClaimAmount !== null && amount > maxClaimAmount) {
+          newErrors.claimAmount = `Cannot exceed policy coverage of ₹${Number(maxClaimAmount).toLocaleString()}`;
+        }
+      }
+      setErrors(newErrors);
+      return;
+    }
+
+    if (errors[name]) setErrors({ ...errors, [name]: '' });
   };
 
   const handleFileChange = (e) => {
@@ -101,15 +138,26 @@ const ClaimModal = ({ isOpen, onClose, onSubmit, policies = [] }) => {
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Claim Amount (₹)</label>
               <input 
-                type="number" 
+                type="text" 
                 name="claimAmount" 
                 className="form-input"
                 placeholder="How much are you claiming for?"
                 style={{ borderColor: errors.claimAmount ? 'var(--color-danger)' : undefined }}
                 value={formData.claimAmount} 
-                onChange={handleChange} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                    handleChange(e);
+                  }
+                }}
               />
-              {errors.claimAmount && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.claimAmount}</span>}
+              {errors.claimAmount
+                ? <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.claimAmount}</span>
+                : maxClaimAmount !== null && (
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                    Max allowed: ₹{Number(maxClaimAmount).toLocaleString()} (policy coverage limit)
+                  </span>
+                )}
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>

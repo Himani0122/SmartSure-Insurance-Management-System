@@ -15,8 +15,19 @@ const DashboardPage = () => {
   const [claims, setClaims] = useState([]);
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
 
-  useEffect(() => { fetchDashboardData(); }, []);
+  useEffect(() => {
+    fetchDashboardData();
+    if (user && user.username) {
+      const key = `smartsure_dashboard_visited_${user.username}`;
+      const visited = localStorage.getItem(key);
+      if (!visited) {
+        setIsFirstLogin(true);
+        localStorage.setItem(key, 'true');
+      }
+    }
+  }, [user]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -67,7 +78,8 @@ const DashboardPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Welcome back, <span style={{ color: 'var(--color-primary-500)' }}>{user?.username}</span> 👋
+              {!isAdmin && isFirstLogin ? 'Welcome,' : 'Welcome back,'}{' '}
+              <span style={{ color: 'var(--color-primary-500)' }}>{user?.username}</span> 👋
             </h2>
             <p style={{ color: 'var(--text-secondary)' }}>Here's what's happening with your {isAdmin ? 'platform' : 'insurance'} today.</p>
           </div>

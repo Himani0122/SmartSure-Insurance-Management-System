@@ -37,6 +37,7 @@ public class ClaimInitiateRequest implements Serializable {
 
     @NotNull(message = "Claim amount is required")
     @Positive(message = "Claim amount must be positive")
-    @Schema(description = "Amount requested in the claim", example = "5000.00")
+    @jakarta.validation.constraints.DecimalMax(value = "100000000.0", inclusive = true, message = "Claim amount cannot exceed \u20b910 Crore")
+    @Schema(description = "Amount requested in the claim (cannot exceed policy coverage amount)", example = "5000.00")
     private java.math.BigDecimal claimAmount;
 }

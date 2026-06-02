@@ -32,7 +32,7 @@ public class EmailService {
         String htmlBody = getHtmlTemplate("Welcome to SmartSure", 
             "Hello " + name + ", we're thrilled to have you on board!",
             "<p>Your account has been successfully created. You can now explore our premium insurance policies, file claims with ease, and manage your entire portfolio from your dashboard.</p>" +
-            "<div style='margin: 30px 0;'><a href='http://localhost:5173/dashboard' style='background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;'>Go to Dashboard</a></div>");
+            "<div style='margin: 30px 0;'><a href='http://localhost/dashboard' style='background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;'>Go to Dashboard</a></div>");
         sendHtmlEmail(toEmail, subject, htmlBody);
     }
 
@@ -40,7 +40,7 @@ public class EmailService {
         String htmlBody = getHtmlTemplate("SmartSure Notification", 
             subject,
             "<p style='white-space: pre-line;'>" + body + "</p>" +
-            "<div style='margin: 30px 0;'><a href='http://localhost:5173/dashboard' style='background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;'>View Details</a></div>");
+            "<div style='margin: 30px 0;'><a href='http://localhost/dashboard' style='background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;'>View Details</a></div>");
         
         sendHtmlEmail(toEmail, subject, htmlBody);
         

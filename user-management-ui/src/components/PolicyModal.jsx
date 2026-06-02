@@ -37,13 +37,28 @@ const PolicyModal = ({ isOpen, onClose, onSubmit, policy }) => {
     setErrors({});
   }, [policy, isOpen]);
 
+  const MAX_PREMIUM = 1000000;       // ₹10,00,000
+  const MAX_COVERAGE = 100000000;    // ₹10 Crore
+  const MAX_DURATION = 600;          // 50 years in months
+
   const validate = () => {
     const errs = {};
     if (!formData.name.trim() || formData.name.length < 3) errs.name = 'Name required (3+ chars)';
     if (!formData.description.trim() || formData.description.length < 10) errs.description = 'Description required (10+ chars)';
-    if (!formData.basePremium || parseFloat(formData.basePremium) <= 0) errs.basePremium = 'Valid premium required';
-    if (!formData.durationMonths || parseInt(formData.durationMonths) <= 0) errs.durationMonths = 'Valid duration required';
-    if (!formData.coverageAmount || parseFloat(formData.coverageAmount) <= 0) errs.coverageAmount = 'Valid coverage required';
+
+    const premium = parseFloat(formData.basePremium);
+    if (!formData.basePremium || isNaN(premium) || premium <= 0) errs.basePremium = 'Valid premium required (must be > 0)';
+    else if (premium > MAX_PREMIUM) errs.basePremium = `Premium cannot exceed ₹${MAX_PREMIUM.toLocaleString()}`;
+
+    const coverage = parseFloat(formData.coverageAmount);
+    if (!formData.coverageAmount || isNaN(coverage) || coverage <= 0) errs.coverageAmount = 'Valid coverage amount required (must be > 0)';
+    else if (coverage > MAX_COVERAGE) errs.coverageAmount = `Coverage cannot exceed ₹${MAX_COVERAGE.toLocaleString()}`;
+    else if (!isNaN(premium) && premium > 0 && coverage < premium) errs.coverageAmount = 'Coverage amount must be ≥ the monthly premium';
+
+    const duration = parseInt(formData.durationMonths);
+    if (!formData.durationMonths || isNaN(duration) || duration <= 0) errs.durationMonths = 'Valid duration required (must be ≥ 1 month)';
+    else if (duration > MAX_DURATION) errs.durationMonths = `Duration cannot exceed ${MAX_DURATION} months (50 years)`;
+
     if (!formData.expiryDate) errs.expiryDate = 'Expiry date required';
     else if (new Date(formData.expiryDate) <= new Date()) errs.expiryDate = 'Must be a future date';
     setErrors(errs);
@@ -100,24 +115,30 @@ const PolicyModal = ({ isOpen, onClose, onSubmit, policy }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Monthly Premium (₹)</label>
-                <input name="basePremium" type="number" step="0.01" className="form-input" style={{ borderColor: errors.basePremium ? 'var(--color-danger)' : undefined }}
+                <input name="basePremium" type="number" step="0.01" min="1" max="1000000" className="form-input" style={{ borderColor: errors.basePremium ? 'var(--color-danger)' : undefined }}
                   placeholder="1000.00" value={formData.basePremium} onChange={handleChange} />
-                {errors.basePremium && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.basePremium}</span>}
+                {errors.basePremium
+                  ? <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.basePremium}</span>
+                  : <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>Range: ₹1 – ₹10,00,000</span>}
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Total Coverage (₹)</label>
-                <input name="coverageAmount" type="number" step="0.01" className="form-input" style={{ borderColor: errors.coverageAmount ? 'var(--color-danger)' : undefined }}
+                <input name="coverageAmount" type="number" step="0.01" min="1" max="100000000" className="form-input" style={{ borderColor: errors.coverageAmount ? 'var(--color-danger)' : undefined }}
                   placeholder="400000.00" value={formData.coverageAmount} onChange={handleChange} />
-                {errors.coverageAmount && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.coverageAmount}</span>}
+                {errors.coverageAmount
+                  ? <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.coverageAmount}</span>
+                  : <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>Max: ₹10 Crore · Must be ≥ premium</span>}
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Duration (Months)</label>
-                <input name="durationMonths" type="number" className="form-input" style={{ borderColor: errors.durationMonths ? 'var(--color-danger)' : undefined }}
+                <input name="durationMonths" type="number" min="1" max="600" className="form-input" style={{ borderColor: errors.durationMonths ? 'var(--color-danger)' : undefined }}
                   placeholder="180" value={formData.durationMonths} onChange={handleChange} />
-                {errors.durationMonths && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.durationMonths}</span>}
+                {errors.durationMonths
+                  ? <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.durationMonths}</span>
+                  : <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>Range: 1 – 600 months (max 50 years)</span>}
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Type</label>

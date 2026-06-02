@@ -25,6 +25,7 @@ public class PolicyRequest implements Serializable {
 
     @NotNull(message = "Base premium is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Premium must be greater than zero")
+    @DecimalMax(value = "1000000.0", inclusive = true, message = "Premium cannot exceed ₹10,00,000")
     @Schema(description = "Base premium amount in INR", example = "5000.00", requiredMode = Schema.RequiredMode.REQUIRED)
     private BigDecimal basePremium;
 
@@ -41,10 +42,12 @@ public class PolicyRequest implements Serializable {
     private LocalDateTime expiryDate;
 
     @Min(value = 1, message = "Duration must be at least 1 month")
+    @Max(value = 600, message = "Duration cannot exceed 600 months (50 years)")
     @Schema(description = "Policy duration in months", example = "180")
     private Integer durationMonths;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Coverage amount must be greater than zero")
+    @DecimalMax(value = "100000000.0", inclusive = true, message = "Coverage amount cannot exceed ₹10 Crore")
     @Schema(description = "Total coverage amount", example = "400000.00")
     private BigDecimal coverageAmount;
 }

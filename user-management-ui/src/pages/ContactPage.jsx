@@ -4,6 +4,7 @@ import {
   MessageCircle, HelpCircle, FileText, ChevronDown, ChevronUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../services/api';
 
 const faqs = [
   {
@@ -33,14 +34,23 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success('Message sent! We\'ll get back to you within 24 hours.');
+    try {
+      await api.post('/auth/send-notification', {
+        email: 'singhhimani623@gmail.com',
+        username: 'admin',
+        subject: `[Contact Form] ${form.subject}`,
+        message: `New message from the SmartSure Contact Form:\n\nName: ${form.name}\nEmail: ${form.email}\nSubject: ${form.subject}\n\nMessage:\n${form.message}`
+      });
+      toast.success("Message sent! We'll get back to you within 24 hours.");
       setForm({ name: '', email: '', subject: '', message: '' });
-    }, 1500);
+    } catch (err) {
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
