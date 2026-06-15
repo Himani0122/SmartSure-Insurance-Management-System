@@ -4,6 +4,16 @@ SmartSure is a state-of-the-art, enterprise-grade Insurance Management System bu
 
 ---
 
+## 🔗 Live Demo & Links
+
+| | Link |
+|---|---|
+| 🌐 **Frontend (Vercel)** | [https://map-up-assignment-pied.vercel.app/](https://map-up-assignment-pied.vercel.app/) |
+| ⚙️ **Backend API (Render)** | [https://geotrack-backend-gpa4.onrender.com](https://geotrack-backend-gpa4.onrender.com) |
+| 🎥 **Video Demo (Loom)** | [https://www.loom.com/share/63325a32f36a4916acddb9dba0e1599d](https://www.loom.com/share/63325a32f36a4916acddb9dba0e1599d) |
+
+---
+
 ## 🌟 Key Features
 
 *   **🔒 Secure Identity & Access Management (IAM):** Dual-step registration featuring email verification (OTP via SMTP & Redis caching) and JWT-based authentication with role-based routing (Admin vs. User).
